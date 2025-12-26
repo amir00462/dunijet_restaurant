@@ -164,26 +164,31 @@ app.post('/api/voice-agent', upload.single('audio'), async (req, res) => {
             },
             timeout: 60000, // 60 second timeout
             maxContentLength: 50 * 1024 * 1024, // 50MB max
+            responseType: 'arraybuffer' // Expect binary response
         });
 
         console.log(`Voice request processed successfully for ${req.ip}`);
         
-        // Wrap N8N response with success flag for client
-        const n8nResponse = response.data;
+        // Check content type from N8N response
+        const contentType = response.headers['content-type'] || '';
         
-        // If N8N response already has success field, use it as is
-        if (typeof n8nResponse === 'object' && n8nResponse !== null) {
-            // Ensure success flag is present
-            if (!('success' in n8nResponse)) {
-                n8nResponse.success = true;
-            }
-            res.json(n8nResponse);
+        if (contentType.includes('audio') || contentType.includes('octet-stream')) {
+            // Binary audio response - forward directly
+            res.set('Content-Type', contentType.includes('audio') ? contentType : 'audio/mpeg');
+            res.send(Buffer.from(response.data));
         } else {
-            // If response is not an object, wrap it
-            res.json({
-                success: true,
-                data: n8nResponse
-            });
+            // Try to parse as JSON
+            try {
+                const jsonData = JSON.parse(Buffer.from(response.data).toString('utf8'));
+                if (!('success' in jsonData)) {
+                    jsonData.success = true;
+                }
+                res.json(jsonData);
+            } catch {
+                // Unknown format, send as binary
+                res.set('Content-Type', 'audio/mpeg');
+                res.send(Buffer.from(response.data));
+            }
         }
 
     } catch (error) {

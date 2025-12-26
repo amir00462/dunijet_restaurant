@@ -259,15 +259,39 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
+            padding: 15px 20px;
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .n8n-ai-agent-modal-header h2 {
             margin: 0;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             color: #333;
+        }
+
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .n8n-ai-agent-clear-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #999;
+            padding: 6px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .n8n-ai-agent-clear-btn:hover {
+            background-color: rgba(255, 71, 87, 0.1);
+            color: #ff4757;
         }
 
         .n8n-ai-agent-close {
@@ -291,18 +315,115 @@
         }
 
         .n8n-ai-agent-modal-body {
-            padding: 20px;
-        }
-
-        .n8n-ai-agent-content {
-            min-height: 120px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
+            max-height: 400px;
+        }
+
+        /* Chat Container */
+        .n8n-ai-agent-chat {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 250px;
+            min-height: 0;
+            padding: 10px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Voice Messages */
+        .voice-message {
+            display: flex;
+            max-width: 85%;
+        }
+
+        .voice-message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .voice-message.assistant {
+            align-self: flex-start;
+        }
+
+        .voice-message-bubble {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 18px;
+            background: #f0f0f0;
+        }
+
+        .voice-message.user .voice-message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .voice-message.assistant .voice-message-bubble {
+            background: #e8e8e8;
+            color: #333;
+        }
+
+        .voice-message .play-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
             justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+
+        .voice-message.user .play-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .voice-message.assistant .play-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .voice-message .play-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .voice-waveform {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 20px;
+        }
+
+        .voice-waveform span {
+            width: 3px;
+            height: 8px;
+            border-radius: 2px;
+            background: currentColor;
+            opacity: 0.6;
+        }
+
+        .voice-waveform span:nth-child(1) { height: 12px; }
+        .voice-waveform span:nth-child(2) { height: 18px; }
+        .voice-waveform span:nth-child(3) { height: 10px; }
+        .voice-waveform span:nth-child(4) { height: 16px; }
+        .voice-waveform span:nth-child(5) { height: 8px; }
+
+        .voice-time {
+            font-size: 11px;
+            opacity: 0.7;
+            white-space: nowrap;
         }
 
         .n8n-ai-agent-status {
             text-align: center;
+            padding: 10px 0;
         }
 
         .n8n-ai-agent-idle p,
@@ -610,60 +731,59 @@
             <div id="n8n-ai-agent-modal" class="n8n-ai-agent-modal" style="display: none;">
                 <div class="n8n-ai-agent-modal-header">
                     <h2>دستیار هوشمند پیتزا دانیجت</h2>
-                    <button id="n8n-ai-agent-close" class="n8n-ai-agent-close" aria-label="Close">
-                        ×
-                    </button>
+                    <div class="header-buttons">
+                        <button id="n8n-ai-agent-clear" class="n8n-ai-agent-clear-btn" title="پاک کردن تاریخچه">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                            </svg>
+                        </button>
+                        <button id="n8n-ai-agent-close" class="n8n-ai-agent-close" aria-label="Close">×</button>
+                    </div>
                 </div>
 
                 <div class="n8n-ai-agent-modal-body">
-                    <div id="n8n-ai-agent-content" class="n8n-ai-agent-content">
-                        <div class="n8n-ai-agent-status">
-                            <div class="n8n-ai-agent-idle">
-                                <p>برای سفارش دادن یا پرسیدن سوال، روی میکروفون کلیک کنید</p>
-                            </div>
+                    <!-- Chat History -->
+                    <div id="n8n-ai-agent-chat" class="n8n-ai-agent-chat"></div>
 
-                            <div class="n8n-ai-agent-recording" style="display: none;">
-                                <div class="n8n-ai-agent-recording-indicator">
-                                    <div class="n8n-ai-agent-pulse"></div>
-                                    <span class="n8n-ai-agent-recording-text">در حال گوش دادن...</span>
-                                </div>
-                                <div id="n8n-ai-agent-waveform" class="n8n-ai-agent-waveform">
-                                    <div class="wave-bar"></div>
-                                    <div class="wave-bar"></div>
-                                    <div class="wave-bar"></div>
-                                    <div class="wave-bar"></div>
-                                    <div class="wave-bar"></div>
-                                </div>
-                            </div>
+                    <!-- Status Container -->
+                    <div id="n8n-ai-agent-status" class="n8n-ai-agent-status">
+                        <div class="n8n-ai-agent-idle">
+                            <p>برای شروع مکالمه روی میکروفون کلیک کنید</p>
+                            <p style="font-size: 12px; color: #888; margin-top: 5px;">صدای شما به صورت خودکار تشخیص داده می‌شود</p>
+                        </div>
 
-                            <div class="n8n-ai-agent-processing" style="display: none;">
-                                <div class="n8n-ai-agent-spinner"></div>
-                                <p>در حال پردازش سفارش شما...</p>
+                        <div class="n8n-ai-agent-recording" style="display: none;">
+                            <div class="n8n-ai-agent-recording-indicator">
+                                <div class="n8n-ai-agent-pulse"></div>
+                                <span class="n8n-ai-agent-recording-text">در حال گوش دادن...</span>
                             </div>
+                            <div class="n8n-ai-agent-waveform">
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                            </div>
+                        </div>
 
-                            <div class="n8n-ai-agent-response" style="display: none;">
-                                <div id="n8n-ai-agent-response-text" class="n8n-ai-agent-response-text"></div>
-                                <button id="n8n-ai-agent-replay" class="n8n-ai-agent-button" style="display: none;">
-                                    🔊 پخش مجدد پاسخ
-                                </button>
-                            </div>
+                        <div class="n8n-ai-agent-processing" style="display: none;">
+                            <div class="n8n-ai-agent-spinner"></div>
+                            <p>در حال پردازش...</p>
+                        </div>
 
-                            <div class="n8n-ai-agent-error" style="display: none;">
-                                <p id="n8n-ai-agent-error-text"></p>
-                            </div>
+                        <div class="n8n-ai-agent-error" style="display: none;">
+                            <p id="n8n-ai-agent-error-text"></p>
                         </div>
                     </div>
 
+                    <!-- Controls -->
                     <div class="n8n-ai-agent-controls">
-                        <button id="n8n-ai-agent-record-btn" class="n8n-ai-agent-record-btn" title="Start recording">
+                        <button id="n8n-ai-agent-record-btn" class="n8n-ai-agent-record-btn" title="شروع مکالمه">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
                             </svg>
                         </button>
-
-                        <button id="n8n-ai-agent-reset-btn" class="n8n-ai-agent-secondary-btn" style="display: none;">
-                            شروع مجدد
-                        </button>
+                        <button id="n8n-ai-agent-reset-btn" class="n8n-ai-agent-secondary-btn" style="display: none;">پایان مکالمه</button>
                     </div>
                 </div>
 
