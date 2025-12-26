@@ -34,6 +34,7 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
             scriptSrcAttr: ["'unsafe-inline'"],
             connectSrc: ["'self'", process.env.N8N_URL ? new URL(process.env.N8N_URL).origin : "'self'"],
+            mediaSrc: ["'self'", "blob:", "data:"],
         },
     },
 }));

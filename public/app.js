@@ -545,6 +545,7 @@ class N8nAiVoiceAgent {
         const { recording, processing } = this.elements;
         this.isProcessing = true;
         
+        console.log('📤 Processing user audio...');
         if (recording) recording.style.display = 'none';
         if (processing) processing.style.display = 'block';
 
@@ -552,14 +553,42 @@ class N8nAiVoiceAgent {
         await this.addMessage('user', audioBlob);
 
         try {
+            console.log('📤 Sending to server...');
             const response = await this.sendToServer(audioBlob);
+            console.log('📥 Server response:', response.success ? 'success' : 'failed');
             
             if (response.success && response.audioBlob) {
-                // Save assistant message to server
-                await this.addMessage('assistant', response.audioBlob);
+                console.log('💾 Saving assistant message to server...');
+                // Save assistant message to server and get the URL
+                const savedMessage = await this.saveAudioToServer(response.audioBlob, 'assistant');
                 
-                await this.playResponse(response.audioBlob);
+                if (savedMessage && savedMessage.url) {
+                    // Add to chat history
+                    const message = {
+                        id: Date.now().toString(),
+                        type: 'assistant',
+                        audioUrl: savedMessage.url,
+                        filename: savedMessage.filename,
+                        mimeType: savedMessage.mimeType,
+                        timestamp: new Date().toISOString()
+                    };
+                    this.chatHistory.push(message);
+                    this.saveChatHistory();
+                    this.renderChatHistory();
+                    
+                    console.log('🔊 Playing response from server URL:', savedMessage.url);
+                    // Play response using server URL (not blob)
+                    await this.playResponseFromUrl(savedMessage.url);
+                    console.log('✅ playResponse completed');
+                } else {
+                    console.error('❌ Failed to save assistant audio to server');
+                }
+                
+                // Only set isProcessing to false AFTER playResponse finishes
+                this.isProcessing = false;
             } else if (response.error) {
+                console.log('❌ Server returned error:', response.error);
+                this.isProcessing = false;
                 this.showError(response.error);
                 setTimeout(() => {
                     if (this.isConversationActive) {
@@ -567,12 +596,41 @@ class N8nAiVoiceAgent {
                         this.startVAD();
                     }
                 }, 2000);
+            } else {
+                // No audioBlob and no error - unexpected state
+                console.warn('⚠️ Unexpected response state - no audioBlob and no error');
+                this.isProcessing = false;
+                if (this.isConversationActive) {
+                    this.showListeningUI();
+                    this.startVAD();
+                }
             }
         } catch (error) {
-            console.error('Error processing audio:', error);
-            this.showError('خطا در پردازش صدا');
-        } finally {
+            console.error('❌ Error processing audio:', error);
             this.isProcessing = false;
+            this.showError('خطا در پردازش صدا');
+        }
+    }
+
+    async saveAudioToServer(audioBlob, type) {
+        try {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, type === 'user' ? 'user-audio.webm' : 'assistant-audio.mp3');
+            formData.append('type', type);
+
+            const response = await fetch('/api/save-audio', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save audio file');
+            }
+
+            return await response.json();
+        } catch (e) {
+            console.error('Error saving audio to server:', e);
+            return null;
         }
     }
 
@@ -619,40 +677,87 @@ class N8nAiVoiceAgent {
         }
     }
 
-    async playResponse(audioBlob) {
+    async playResponseFromUrl(audioUrl) {
         const { processing } = this.elements;
         
+        console.log('🔊 Starting to play assistant response from URL:', audioUrl);
         this.isPlayingResponse = true;
         if (processing) processing.style.display = 'none';
         
+        // Show "playing response" UI
+        this.showPlayingUI();
+        
         try {
-            const audioUrl = URL.createObjectURL(audioBlob);
             this.audioPlayer = new Audio(audioUrl);
             
+            // Wait for audio to be ready and play completely
             await new Promise((resolve, reject) => {
+                let hasStartedPlaying = false;
+                
+                this.audioPlayer.oncanplaythrough = () => {
+                    console.log('🔊 Audio ready to play');
+                };
+                
+                this.audioPlayer.onplay = () => {
+                    hasStartedPlaying = true;
+                    console.log('🔊 Audio started playing');
+                };
+                
                 this.audioPlayer.onended = () => {
-                    URL.revokeObjectURL(audioUrl);
+                    console.log('✅ Assistant audio finished playing');
                     resolve();
                 };
+                
                 this.audioPlayer.onerror = (e) => {
-                    URL.revokeObjectURL(audioUrl);
+                    console.error('❌ Error playing assistant audio:', e);
                     reject(e);
                 };
-                this.audioPlayer.play().catch(reject);
+                
+                // Start playing
+                this.audioPlayer.play()
+                    .then(() => {
+                        console.log('🔊 Play promise resolved');
+                    })
+                    .catch((err) => {
+                        console.error('❌ Play failed:', err);
+                        reject(err);
+                    });
+                
+                // Safety timeout - if audio doesn't end in 2 minutes, resolve anyway
+                setTimeout(() => {
+                    if (!hasStartedPlaying) {
+                        console.warn('⚠️ Audio never started, resolving anyway');
+                        reject(new Error('Audio playback timeout'));
+                    }
+                }, 120000);
             });
             
         } catch (error) {
-            console.error('Error playing audio:', error);
+            console.error('❌ Error in playResponseFromUrl:', error);
         } finally {
             this.isPlayingResponse = false;
+            console.log('🎤 Preparing to return to listening mode...');
             
+            // After audio finishes, go back to listening mode
             if (this.isConversationActive) {
-                setTimeout(() => {
-                    this.showListeningUI();
-                    this.startVAD();
-                }, 500);
+                // Wait a bit before returning to listening mode
+                await new Promise(resolve => setTimeout(resolve, 800));
+                console.log('🎤 Returning to listening mode');
+                this.showListeningUI();
+                this.startVAD();
             }
         }
+    }
+
+    showPlayingUI() {
+        const { recording, processing } = this.elements;
+        console.log('📢 Showing playing UI');
+        if (recording) {
+            recording.style.display = 'block';
+            const text = recording.querySelector('.n8n-ai-agent-recording-text');
+            if (text) text.textContent = 'در حال پخش پاسخ...';
+        }
+        if (processing) processing.style.display = 'none';
     }
 
     showError(message) {
