@@ -1,0 +1,60 @@
+{
+  "name": "dunijet-pizza",
+  "version": "1.0.0",
+  "description": "Dunijet Pizza Single Page Site with AI Voice Agent",
+  "main": "server.js",
+  "author": "Dunijet Pizza Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "scripts": {
+    "start": "cross-env NODE_ENV=production node server.js",
+    "dev": "cross-env NODE_ENV=development nodemon server.js",
+    "build": "echo 'No build step required for this project'",
+    "test": "node test-webhook.js",
+    "test:webhook": "node test-webhook.js",
+    "lint": "echo 'No linting configured'",
+    "docker:build": "docker build -t dunijet-pizza .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env dunijet-pizza",
+    "deploy": "npm run docker:build && npm run docker:run"
+  },
+  "keywords": [
+    "pizza",
+    "restaurant",
+    "voice-agent",
+    "ai",
+    "n8n",
+    "persian",
+    "single-page",
+    "glass-design"
+  ],
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "axios": "^1.6.2",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4",
+    "express-rate-limit": "^7.1.5",
+    "morgan": "^1.10.0",
+    "serve-favicon": "^2.5.0",
+    "path": "^0.12.7",
+    "form-data": "^4.0.0",
+    "busboy": "^1.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "cross-env": "^7.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dunijet-pizza/dunijet-pizza-site.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dunijet-pizza/dunijet-pizza-site/issues"
+  },
+  "homepage": "https://dunijettizza.com"
+}
+

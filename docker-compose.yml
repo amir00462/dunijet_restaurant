@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  danijet-pizza:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: danijet-pizza-site
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
+      - SITE_NAME=${SITE_NAME:-پیتزا فروشی دانیجت}
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - danijet-network
+
+  # Optional: Nginx reverse proxy for additional security and performance
+  nginx:
+    image: nginx:alpine
+    container_name: danijet-nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - danijet-pizza
+    restart: unless-stopped
+    networks:
+      - danijet-network
+    profiles:
+      - nginx
+
+networks:
+  danijet-network:
+    driver: bridge
+
+volumes:
+  danijet-logs:
+    driver: local
+

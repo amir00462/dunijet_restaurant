@@ -1,0 +1,101 @@
+{
+  "pizzas": [
+    {
+      "id": 1,
+      "name": "پیتزا مخصوص دانیجت",
+      "description": "ژامبون گوشت ۹۰٪، قارچ تازه، فلفل دلمه ای، پنیر موزارلا، سس مخصوص دانیجت",
+      "price": "۳۸۵,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop",
+      "badges": ["popular"]
+    },
+    {
+      "id": 2,
+      "name": "پیتزا پپرونی ایتالیایی",
+      "description": "پپرونی ۹۰٪ اصل ایتالیا، پنیر موزارلا، سس گوجه فرنگی، اوریگانو",
+      "price": "۳۴۰,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1628840042765-356cda07504e?q=80&w=1780&auto=format&fit=crop",
+      "badges": ["spicy"]
+    },
+    {
+      "id": 3,
+      "name": "پیتزا مخلوط خانواده",
+      "description": "کالباس مخصوص، ژامبون گوشت، قارچ، فلفل دلمه، ذرت شیرین، پنیر موزارلا",
+      "price": "۳۶۰,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=1981&auto=format&fit=crop",
+      "badges": ["family"]
+    },
+    {
+      "id": 4,
+      "name": "پیتزا مرغ باربیکیو",
+      "description": "فیله مرغ طعم دار شده با سس باربیکیو، قارچ، فلفل دلمه، پنیر مخصوص",
+      "price": "۳۷۰,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1565299507177-b0ac66763828?q=80&w=1922&auto=format&fit=crop",
+      "badges": []
+    },
+    {
+      "id": 5,
+      "name": "پیتزا سبزیجات مدیترانه ای",
+      "description": "قارچ، فلفل دلمه، ذرت، زیتون سیاه، گوجه فرنگی، کلم بروکلی، پنیر موزارلا",
+      "price": "۳۱۰,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1541745537411-b8046dc6d66c?q=80&w=1887&auto=format&fit=crop",
+      "badges": ["vegetarian"]
+    },
+    {
+      "id": 6,
+      "name": "پیتزا استیک راسته",
+      "description": "راسته گوساله گریل شده، قارچ بلانچ، پنیر پارمزان، سس سیر و ترب",
+      "price": "۴۵۰,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?q=80&w=1925&auto=format&fit=crop",
+      "badges": ["premium"]
+    },
+    {
+      "id": 7,
+      "name": "پیتزا تون ماهی",
+      "description": "تون ماهی آب پز، پیاز، فلفل دلمه، زیتون، پنیر موزارلا، سس مایونز",
+      "price": "۳۲۰,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?q=80&w=2070&auto=format&fit=crop",
+      "badges": []
+    },
+    {
+      "id": 8,
+      "name": "پیتزا گوشت و پنیر",
+      "description": "گوشت چرخ کرده، ژامبون، کالباس، پنیر چهار نوع، سس گوجه خانگی",
+      "price": "۴۱۰,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=2069&auto=format&fit=crop",
+      "badges": []
+    },
+    {
+      "id": 9,
+      "name": "پیتزا چیکن رست",
+      "description": "فیله مرغ رست شده، قارچ، ذرت، پنیر موزارلا، سس خردل و عسل",
+      "price": "۳۸۰,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1607532941433-304659e8198a?q=80&w=2087&auto=format&fit=crop",
+      "badges": []
+    },
+    {
+      "id": 10,
+      "name": "پیتزا مارگاریتا",
+      "description": "گوجه فرنگی، پنیر موزارلا، ریحان تازه، روغن زیتون، سس گوجه اصل",
+      "price": "۲۹۰,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?q=80&w=2070&auto=format&fit=crop",
+      "badges": ["classic"]
+    },
+    {
+      "id": 11,
+      "name": "پیتزا سیب زمینی و پیاز",
+      "description": "سیب زمینی خلالی، پیاز کاراملی، پنیر گودا، جعفری، سس خامه",
+      "price": "۲۷۰,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop",
+      "badges": ["vegetarian"]
+    },
+    {
+      "id": 12,
+      "name": "پیتزا استیک و قارچ",
+      "description": "استیک گوساله، قارچ پورتوبلو، پنیر پارمزان، سس ترافل، ریحان",
+      "price": "۴۸۰,۰۰۰ تومان",
+      "image": "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?q=80&w=1925&auto=format&fit=crop",
+      "badges": ["premium"]
+    }
+  ]
+}
+

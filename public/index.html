@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پیتزا دانیجت</title>
+    <link rel="icon" type="image/png" href="/icons/icon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;400;700&display=swap" rel="stylesheet">
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Performance optimizations */
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Use GPU acceleration for transforms */
+        .glass-card,
+        .add-to-cart-btn,
+        .n8n-ai-agent-toggle {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
+
+        /* Loading screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%),
+                linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .loading-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid #ec4899;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+            will-change: transform;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+            background-attachment: fixed;
+            color: white;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .glass::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            border-radius: 24px 24px 0 0;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            will-change: transform;
+            contain: layout style paint;
+        }
+
+        .glass-card:hover {
+            transform: translate3d(0, -8px, 0);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+        }
+        .voice-widget {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            z-index: 1000;
+        }
+        .record-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #e94560;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+            transition: all 0.3s ease;
+        }
+        .record-btn.recording {
+            background: #ff0000;
+            will-change: transform;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255, 0, 0, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+        }
+
+        /* Pizza Badges */
+        .badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge.popular { background: linear-gradient(45deg, #ff6b6b, #ee5a24); color: white; }
+        .badge.spicy { background: linear-gradient(45deg, #ff4757, #ff3838); color: white; }
+        .badge.family { background: linear-gradient(45deg, #3742fa, #2f3542); color: white; }
+        .badge.vegetarian { background: linear-gradient(45deg, #2ed573, #26de81); color: white; }
+        .badge.premium { background: linear-gradient(45deg, #ffa502, #ff6348); color: white; }
+        .badge.classic { background: linear-gradient(45deg, #7bed9f, #2ed573); color: white; }
+
+        /* Enhanced glass effects */
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+            will-change: transform;
+        }
+
+        /* Scroll animations - Optimized */
+        .fade-in {
+            opacity: 0;
+            transform: translate3d(0, 20px, 0);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+
+        /* Voice Agent Widget Styles */
+        .n8n-ai-agent-widget {
+            position: fixed;
+            z-index: 1000;
+        }
+
+        .n8n-ai-agent-bottom-left {
+            bottom: 30px;
+            left: 30px;
+        }
+
+        .n8n-ai-agent-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .n8n-ai-agent-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .n8n-ai-agent-modal {
+            position: fixed;
+            bottom: 100px;
+            left: 30px;
+            width: 350px;
+            max-width: calc(100vw - 60px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            animation: modalSlideIn 0.3s ease-out;
+            z-index: 1001;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .n8n-ai-agent-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .n8n-ai-agent-modal-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .n8n-ai-agent-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+
+        .n8n-ai-agent-close:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .n8n-ai-agent-modal-body {
+            padding: 20px;
+        }
+
+        .n8n-ai-agent-content {
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .n8n-ai-agent-status {
+            text-align: center;
+        }
+
+        .n8n-ai-agent-idle p,
+        .n8n-ai-agent-processing p,
+        .n8n-ai-agent-error p {
+            margin: 10px 0;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .n8n-ai-agent-recording-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .n8n-ai-agent-pulse {
+            width: 20px;
+            height: 20px;
+            background: #ff4757;
+            border-radius: 50%;
+            will-change: transform;
+        }
+
+        /* Only animate when visible */
+        .n8n-ai-agent-recording:not([style*="display: none"]) .n8n-ai-agent-pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        .n8n-ai-agent-recording-text {
+            color: #ff4757;
+            font-weight: 500;
+        }
+
+        .n8n-ai-agent-waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            height: 30px;
+        }
+
+        .wave-bar {
+            width: 4px;
+            background: #667eea;
+            border-radius: 2px;
+            will-change: height;
+        }
+
+        /* Only animate when recording is active */
+        .n8n-ai-agent-recording:not([style*="display: none"]) .wave-bar {
+            animation: wave 1.5s ease-in-out infinite;
+        }
+
+        .wave-bar:nth-child(1) { animation-delay: 0s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { height: 10px; opacity: 0.4; }
+            50% { height: 30px; opacity: 1; }
+        }
+
+        .n8n-ai-agent-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        .n8n-ai-agent-response-text {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .n8n-ai-agent-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: transform 0.2s ease;
+        }
+
+        .n8n-ai-agent-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .n8n-ai-agent-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .n8n-ai-agent-record-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #ff4757;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+            padding: 0;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .n8n-ai-agent-record-btn svg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .n8n-ai-agent-record-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
+        }
+
+        .n8n-ai-agent-record-btn.recording {
+            background: #ff3838;
+            box-shadow: 0 4px 20px rgba(255, 71, 87, 0.5);
+        }
+
+        .n8n-ai-agent-secondary-btn {
+            background: #f1f2f6;
+            color: #666;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s ease;
+        }
+
+        .n8n-ai-agent-secondary-btn:hover {
+            background: #e8e8e8;
+        }
+
+        .n8n-ai-agent-footer {
+            text-align: center;
+            padding: 15px 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            color: #888;
+            font-size: 11px;
+        }
+
+        /* Modern Animations - Optimized */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slide-down {
+            animation: slideDown 0.8s ease-out;
+        }
+
+        /* Static glow effect instead of animation */
+        .animate-pulse-glow {
+            text-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
+        }
+
+        /* Enhanced button effects */
+        .add-to-cart-btn {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .add-to-cart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
+        }
+
+        /* Image hover effects */
+        .glass-card img {
+            transition: transform 0.3s ease;
+            will-change: transform;
+        }
+
+        .glass-card:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Info banner - removed animation for performance */
+        .glass p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Respect user's motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .glass-card:hover {
+                transform: translate3d(0, -5px, 0);
+            }
+
+            .animate-pulse-glow {
+                font-size: 2rem;
+            }
+
+            /* Reduce blur on mobile for better performance */
+            .glass,
+            .glass-card,
+            .n8n-ai-agent-modal {
+                backdrop-filter: blur(5px);
+                -webkit-backdrop-filter: blur(5px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .n8n-ai-agent-modal {
+                left: 15px;
+                right: 15px;
+                width: auto;
+                bottom: 90px;
+            }
+
+            .n8n-ai-agent-bottom-left {
+                left: 15px;
+            }
+
+            .glass p {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="glass p-6 mb-12 flex justify-between items-center animate-slide-down">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-pink-400 via-purple-500 to-pink-600 bg-clip-text text-transparent animate-pulse-glow">
+                پیتزا دانیجت
+            </h1>
+            <nav class="hidden md:flex space-x-6 space-x-reverse">
+            <a href="#home" class="hover:text-pink-400 transition">صفحه اصلی</a>
+            <a href="#menu" class="hover:text-pink-400 transition">منو</a>
+            <a href="#about" class="hover:text-pink-400 transition">درباره ما</a>
+            <a href="#contact" class="hover:text-pink-400 transition">تماس با ما</a>
+            </nav>
+        </header>
+
+        <!-- Menu Section -->
+        <section id="menu">
+            <h2 class="text-4xl font-bold mb-8 text-center">منوی پیتزاهای خوشمزه</h2>
+            <p class="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
+                بهترین پیتزاهای تهران با مواد اولیه اصل ایتالیایی و طعم منحصر به فرد دانیجت
+            </p>
+            <div id="pizza-menu" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Pizza cards will be injected here -->
+            </div>
+
+        </section>
+
+        <!-- Voice Agent Widget -->
+        <div id="n8n-ai-agent-widget" class="n8n-ai-agent-widget n8n-ai-agent-bottom-left">
+            <!-- Widget toggle button -->
+            <button id="n8n-ai-agent-toggle" class="n8n-ai-agent-toggle" aria-label="Open AI Voice Agent" title="Click to talk with AI">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 1C6.48 1 2 5.48 2 11c0 1.1.9 2 2 2s2-.9 2-2c0-3.87 3.13-7 7-7s7 3.13 7 7c0 1.1.9 2 2 2s2-.9 2-2c0-5.52-4.48-10-10-10zm0 12c-1.1 0-2 .9-2 2v5c0 1.1.9 2 2 2s2-.9 2-2v-5c0-1.1-.9-2-2-2z" fill="currentColor"/>
+                </svg>
+            </button>
+
+            <!-- Widget modal -->
+            <div id="n8n-ai-agent-modal" class="n8n-ai-agent-modal" style="display: none;">
+                <div class="n8n-ai-agent-modal-header">
+                    <h2>دستیار هوشمند پیتزا دانیجت</h2>
+                    <button id="n8n-ai-agent-close" class="n8n-ai-agent-close" aria-label="Close">
+                        ×
+                    </button>
+                </div>
+
+                <div class="n8n-ai-agent-modal-body">
+                    <div id="n8n-ai-agent-content" class="n8n-ai-agent-content">
+                        <div class="n8n-ai-agent-status">
+                            <div class="n8n-ai-agent-idle">
+                                <p>برای سفارش دادن یا پرسیدن سوال، روی میکروفون کلیک کنید</p>
+                            </div>
+
+                            <div class="n8n-ai-agent-recording" style="display: none;">
+                                <div class="n8n-ai-agent-recording-indicator">
+                                    <div class="n8n-ai-agent-pulse"></div>
+                                    <span class="n8n-ai-agent-recording-text">در حال گوش دادن...</span>
+                                </div>
+                                <div id="n8n-ai-agent-waveform" class="n8n-ai-agent-waveform">
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                </div>
+                            </div>
+
+                            <div class="n8n-ai-agent-processing" style="display: none;">
+                                <div class="n8n-ai-agent-spinner"></div>
+                                <p>در حال پردازش سفارش شما...</p>
+                            </div>
+
+                            <div class="n8n-ai-agent-response" style="display: none;">
+                                <div id="n8n-ai-agent-response-text" class="n8n-ai-agent-response-text"></div>
+                                <button id="n8n-ai-agent-replay" class="n8n-ai-agent-button" style="display: none;">
+                                    🔊 پخش مجدد پاسخ
+                                </button>
+                            </div>
+
+                            <div class="n8n-ai-agent-error" style="display: none;">
+                                <p id="n8n-ai-agent-error-text"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="n8n-ai-agent-controls">
+                        <button id="n8n-ai-agent-record-btn" class="n8n-ai-agent-record-btn" title="Start recording">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                            </svg>
+                        </button>
+
+                        <button id="n8n-ai-agent-reset-btn" class="n8n-ai-agent-secondary-btn" style="display: none;">
+                            شروع مجدد
+                        </button>
+                    </div>
+                </div>
+
+                <div class="n8n-ai-agent-footer">
+                    <small>قدرت گرفته از هوش مصنوعی</small>
+                </div>
+            </div>
+        </div>
+        <!-- About Section -->
+        <section id="about" class="glass mt-16 p-8 mb-8">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-3xl font-bold mb-6 text-pink-400">درباره پیتزا دانیجت</h2>
+                <p class="text-gray-300 leading-relaxed mb-6">
+                    پیتزا دانیجت با بیش از ۱۰ سال تجربه در تهیه پیتزاهای اصل ایتالیایی، افتخار دارد که بهترین مواد اولیه را با طعم منحصر به فرد ایرانی ترکیب کند.
+                    ما از آرد ایتالیایی، پنیر موزارلا اصل، گوشت تازه و سبزیجات ارگانیکاستفاده می‌کنیم.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">🏆</div>
+                        <h3 class="font-bold mb-2">کیفیت برتر</h3>
+                        <p class="text-sm text-gray-400">استفاده از بهترین مواد اولیه</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">🚚</div>
+                        <h3 class="font-bold mb-2">ارسال سریع</h3>
+                        <p class="text-sm text-gray-400">تحویل در کمتر از ۳۰ دقیقه</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">💝</div>
+                        <h3 class="font-bold mb-2">رضایت مشتریان</h3>
+                        <p class="text-sm text-gray-400">بالاترین امتیاز را داریم</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="glass p-8 mb-8">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-6 text-center text-pink-400">تماس با ما</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div>
+                        <h3 class="font-bold mb-4">اطلاعات تماس</h3>
+                        <div class="space-y-3 text-gray-300">
+                            <p>📍 اصفهان، نصف جهان</p>
+                            <p>📞 ۰۹۹۰۰۶۶۸۷۲۱</p>
+                            <p>🕐 ۱۱:۳۰ صبح الی ۱۱:۳۰ شب</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold mb-4">ساعات کاری</h3>
+                        <div class="space-y-2 text-gray-300">
+                            <p>شنبه تا پنج‌شنبه: ۱۱:۳۰ - ۲۳:۳۰</p>
+                            <p>جمعه: ۱۲:۰۰ - ۲۴:۰۰</p>
+                            <p class="text-pink-400 font-semibold">🚚 هزینه ارسال: ۵۰,۰۰۰ تومان</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold mb-4">شبکه های اجتماعی</h3>
+                        <div class="space-y-3">
+                            <a href="https://www.instagram.com/dunijet" class="flex items-center text-gray-300 hover:text-pink-500 transition">
+                                <span class="ml-2">📷</span> اینستاگرام
+                            </a>
+                            <a href="https://t.me/dunijet_ai" class="flex items-center text-gray-300 hover:text-pink-500 transition">
+                                <span class="ml-2">💬</span> تلگرام
+                            </a>
+                            <a href="https://ir.linkedin.com/in/amirhosseinmohammadi-dunijet" class="flex items-center text-gray-300 hover:text-pink-500 transition">
+                                <span class="ml-2">💼</span> لینکدین
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
