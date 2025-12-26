@@ -31,7 +31,6 @@ services:
     networks:
       - danijet-network
 
-  # Optional: Nginx reverse proxy for additional security and performance
   nginx:
     image: nginx:alpine
     container_name: danijet-nginx

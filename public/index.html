@@ -12,13 +12,11 @@
             scroll-behavior: smooth;
         }
 
-        /* Performance optimizations */
         * {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Use GPU acceleration for transforms */
         .glass-card,
         .add-to-cart-btn,
         .n8n-ai-agent-toggle {
@@ -27,7 +25,6 @@
             perspective: 1000px;
         }
 
-        /* Loading screen */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -147,7 +144,6 @@
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
         }
 
-        /* Pizza Badges */
         .badge {
             padding: 2px 8px;
             border-radius: 12px;
@@ -162,7 +158,6 @@
         .badge.premium { background: linear-gradient(45deg, #ffa502, #ff6348); color: white; }
         .badge.classic { background: linear-gradient(45deg, #7bed9f, #2ed573); color: white; }
 
-        /* Enhanced glass effects */
         .glass-card::before {
             content: '';
             position: absolute;
@@ -173,7 +168,6 @@
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
         }
 
-        /* Loading animation */
         .loading {
             display: inline-block;
             width: 20px;
@@ -185,7 +179,6 @@
             will-change: transform;
         }
 
-        /* Scroll animations - Optimized */
         .fade-in {
             opacity: 0;
             transform: translate3d(0, 20px, 0);
@@ -197,7 +190,6 @@
             transform: translate3d(0, 0, 0);
         }
 
-        /* Voice Agent Widget Styles */
         .n8n-ai-agent-widget {
             position: fixed;
             z-index: 1000;
@@ -321,7 +313,6 @@
             max-height: 400px;
         }
 
-        /* Chat Container */
         .n8n-ai-agent-chat {
             flex: 1;
             overflow-y: auto;
@@ -333,7 +324,6 @@
             gap: 10px;
         }
 
-        /* Voice Messages */
         .voice-message {
             display: flex;
             max-width: 85%;
@@ -449,7 +439,6 @@
             will-change: transform;
         }
 
-        /* Only animate when visible */
         .n8n-ai-agent-recording:not([style*="display: none"]) .n8n-ai-agent-pulse {
             animation: pulse 1.5s infinite;
         }
@@ -474,7 +463,6 @@
             will-change: height;
         }
 
-        /* Only animate when recording is active */
         .n8n-ai-agent-recording:not([style*="display: none"]) .wave-bar {
             animation: wave 1.5s ease-in-out infinite;
         }
@@ -603,7 +591,6 @@
             font-size: 11px;
         }
 
-        /* Modern Animations - Optimized */
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -619,12 +606,10 @@
             animation: slideDown 0.8s ease-out;
         }
 
-        /* Static glow effect instead of animation */
         .animate-pulse-glow {
             text-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
         }
 
-        /* Enhanced button effects */
         .add-to-cart-btn {
             position: relative;
             overflow: hidden;
@@ -638,7 +623,6 @@
             box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
         }
 
-        /* Image hover effects */
         .glass-card img {
             transition: transform 0.3s ease;
             will-change: transform;
@@ -648,12 +632,10 @@
             transform: scale(1.05);
         }
 
-        /* Info banner - removed animation for performance */
         .glass p {
             color: rgba(255, 255, 255, 0.9);
         }
 
-        /* Respect user's motion preferences */
         @media (prefers-reduced-motion: reduce) {
             *,
             *::before,
@@ -665,7 +647,6 @@
             }
         }
 
-        /* Mobile responsiveness */
         @media (max-width: 768px) {
             .glass-card:hover {
                 transform: translate3d(0, -5px, 0);
@@ -675,7 +656,6 @@
                 font-size: 2rem;
             }
 
-            /* Reduce blur on mobile for better performance */
             .glass,
             .glass-card,
             .n8n-ai-agent-modal {

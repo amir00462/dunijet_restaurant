@@ -1,12 +1,11 @@
 let pizzas = [];
 
-// Load menu from JSON file
 async function loadMenuData() {
     try {
         console.log('Attempting to fetch /menu.json...');
         const response = await fetch('/menu.json');
         console.log('Fetch response:', response.status, response.statusText);
-        
+
         if (!response.ok) {
             throw new Error(`Failed to load menu: ${response.statusText}`);
         }
@@ -16,15 +15,13 @@ async function loadMenuData() {
         return true;
     } catch (error) {
         console.error('Error loading menu:', error);
-        // Fallback: return false to show error
         return false;
     }
 }
 
-// Render Pizzas - Optimized with lazy loading
 function renderMenu() {
     const menuContainer = document.getElementById('pizza-menu');
-    
+
     if (!menuContainer) {
         console.error('Pizza menu container not found');
         return;
@@ -45,12 +42,10 @@ function renderMenu() {
     };
 
     menuContainer.innerHTML = pizzas.map((pizza, index) => {
-        // Convert badges array to HTML spans
-        const badgesHtml = (pizza.badges || []).map(badge => 
+        const badgesHtml = (pizza.badges || []).map(badge =>
             `<span class="badge ${badge}">${badgeLabels[badge] || badge}</span>`
         ).join('');
 
-        // Lazy load images after first 3 for better initial performance
         const loadingAttr = index > 2 ? 'loading="lazy"' : '';
 
         return `
@@ -72,10 +67,8 @@ function renderMenu() {
     `}).join('');
 }
 
-// Voice Agent with VAD and Chat History
 class N8nAiVoiceAgent {
     constructor() {
-        // Recording state
         this.mediaRecorder = null;
         this.audioStream = null;
         this.audioChunks = [];
@@ -83,8 +76,7 @@ class N8nAiVoiceAgent {
         this.isConversationActive = false;
         this.isProcessing = false;
         this.isPlayingResponse = false;
-        
-        // VAD (Voice Activity Detection)
+
         this.audioContext = null;
         this.analyser = null;
         this.silenceTimeout = null;
@@ -93,15 +85,13 @@ class N8nAiVoiceAgent {
         this.silenceDuration = 1500;
         this.minRecordingTime = 500;
         this.recordingStartTime = 0;
-        
-        // Chat history
+
         this.chatHistory = [];
         this.storageKey = 'voice_chat_history';
-        
-        // Audio player
+
         this.audioPlayer = null;
         this.currentPlayingId = null;
-        
+
         this.elements = {};
         this.init();
     }
@@ -142,13 +132,11 @@ class N8nAiVoiceAgent {
         if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) this.closeModal(); });
     }
 
-    // LocalStorage methods - now stores URLs instead of base64
     loadChatHistory() {
         try {
             const stored = localStorage.getItem(this.storageKey);
             if (stored) {
                 this.chatHistory = JSON.parse(stored);
-                // Filter out old base64 entries (they won't work anymore)
                 this.chatHistory = this.chatHistory.filter(msg => msg.audioUrl);
             }
         } catch (e) {
@@ -166,13 +154,12 @@ class N8nAiVoiceAgent {
     }
 
     async clearHistory() {
-        // Clear files from server
         try {
             await fetch('/api/audio-clear', { method: 'DELETE' });
         } catch (e) {
             console.warn('Failed to clear server audio files:', e);
         }
-        
+
         this.chatHistory = [];
         localStorage.removeItem(this.storageKey);
         this.renderChatHistory();
@@ -180,7 +167,6 @@ class N8nAiVoiceAgent {
 
     async addMessage(type, audioBlob) {
         try {
-            // Save audio file to server
             const formData = new FormData();
             formData.append('audio', audioBlob, type === 'user' ? 'user-audio.webm' : 'assistant-audio.mp3');
             formData.append('type', type);
@@ -195,7 +181,7 @@ class N8nAiVoiceAgent {
             }
 
             const result = await response.json();
-            
+
             const message = {
                 id: Date.now().toString(),
                 type: type,
@@ -204,7 +190,7 @@ class N8nAiVoiceAgent {
                 mimeType: result.mimeType,
                 timestamp: new Date().toISOString()
             };
-            
+
             this.chatHistory.push(message);
             this.saveChatHistory();
             this.renderChatHistory();
@@ -246,10 +232,8 @@ class N8nAiVoiceAgent {
             </div>
         `).join('');
 
-        // Load durations for messages that don't have them yet
         this.loadAudioDurations();
 
-        // Attach event listeners to play buttons
         chatContainer.querySelectorAll('.play-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -258,7 +242,6 @@ class N8nAiVoiceAgent {
             });
         });
 
-        // Scroll to bottom
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
@@ -279,7 +262,7 @@ class N8nAiVoiceAgent {
         if (!chatContainer) return;
 
         for (const msg of this.chatHistory) {
-            if (msg.duration) continue; // Already has duration
+            if (msg.duration) continue;
             if (!msg.audioUrl) continue;
 
             try {
@@ -287,22 +270,19 @@ class N8nAiVoiceAgent {
                 await new Promise((resolve) => {
                     audio.onloadedmetadata = () => {
                         msg.duration = audio.duration;
-                        // Update the display
                         const timeEl = chatContainer.querySelector(`.voice-time[data-message-id="${msg.id}"]`);
                         if (timeEl) {
                             timeEl.textContent = this.formatDuration(audio.duration);
                         }
                         resolve();
                     };
-                    audio.onerror = () => resolve(); // Skip on error
-                    // Timeout after 5 seconds
+                    audio.onerror = () => resolve();
                     setTimeout(resolve, 5000);
                 });
             } catch (e) {
                 console.warn('Could not load duration for message:', msg.id);
             }
         }
-        // Save updated durations
         this.saveChatHistory();
     }
 
@@ -313,7 +293,6 @@ class N8nAiVoiceAgent {
             return;
         }
 
-        // Stop current playing
         if (this.audioPlayer) {
             this.audioPlayer.pause();
             this.updatePlayButton(this.currentPlayingId, false);
@@ -329,7 +308,6 @@ class N8nAiVoiceAgent {
             this.currentPlayingId = messageId;
             this.updatePlayButton(messageId, true);
 
-            // Set up event handlers before setting src
             await new Promise((resolve, reject) => {
                 this.audioPlayer.oncanplaythrough = () => {
                     resolve();
@@ -347,11 +325,9 @@ class N8nAiVoiceAgent {
                     reject(new Error('Failed to load audio'));
                 };
 
-                // Set source from server URL
                 this.audioPlayer.src = message.audioUrl;
                 this.audioPlayer.load();
-                
-                // Timeout for loading
+
                 setTimeout(() => {
                     reject(new Error('Audio loading timeout'));
                 }, 10000);
@@ -400,7 +376,6 @@ class N8nAiVoiceAgent {
             modal.style.display = 'none';
             document.body.style.overflow = '';
             document.body.style.paddingRight = '0';
-            // Don't end conversation, just close modal
             if (this.isConversationActive) {
                 this.endConversation();
             }
@@ -417,27 +392,27 @@ class N8nAiVoiceAgent {
 
     async startConversation() {
         const { recordBtn, idle } = this.elements;
-        
+
         try {
-            this.audioStream = await navigator.mediaDevices.getUserMedia({ 
+            this.audioStream = await navigator.mediaDevices.getUserMedia({
                 audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
             });
-            
+
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.analyser = this.audioContext.createAnalyser();
             this.analyser.fftSize = 512;
             this.analyser.smoothingTimeConstant = 0.8;
-            
+
             const source = this.audioContext.createMediaStreamSource(this.audioStream);
             source.connect(this.analyser);
-            
+
             this.isConversationActive = true;
             if (recordBtn) recordBtn.classList.add('recording');
             if (idle) idle.style.display = 'none';
-            
+
             this.showListeningUI();
             this.startVAD();
-            
+
         } catch (error) {
             console.error('Error starting conversation:', error);
             this.showError('دسترسی به میکروفون امکان‌پذیر نیست');
@@ -449,17 +424,17 @@ class N8nAiVoiceAgent {
         this.stopVAD();
         this.stopRecording();
         this.stopStream();
-        
+
         if (this.audioContext) {
             this.audioContext.close();
             this.audioContext = null;
         }
-        
+
         if (this.audioPlayer) {
             this.audioPlayer.pause();
             this.audioPlayer = null;
         }
-        
+
         this.resetUI();
     }
 
@@ -472,22 +447,22 @@ class N8nAiVoiceAgent {
 
     startVAD() {
         if (!this.analyser || !this.isConversationActive) return;
-        
+
         const bufferLength = this.analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
-        
+
         const checkAudio = () => {
             if (!this.isConversationActive) return;
             if (this.isProcessing || this.isPlayingResponse) {
                 requestAnimationFrame(checkAudio);
                 return;
             }
-            
+
             this.analyser.getByteFrequencyData(dataArray);
             let sum = 0;
             for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
             const average = sum / bufferLength;
-            
+
             if (average > this.silenceThreshold) {
                 if (!this.isRecording) this.startRecording();
                 this.speechStarted = true;
@@ -504,10 +479,10 @@ class N8nAiVoiceAgent {
                     }, this.silenceDuration);
                 }
             }
-            
+
             requestAnimationFrame(checkAudio);
         };
-        
+
         checkAudio();
     }
 
@@ -520,19 +495,19 @@ class N8nAiVoiceAgent {
 
     startRecording() {
         if (this.isRecording || !this.audioStream) return;
-        
+
         this.audioChunks = [];
         this.mediaRecorder = new MediaRecorder(this.audioStream, { mimeType: 'audio/webm;codecs=opus' });
-        
+
         this.mediaRecorder.ondataavailable = (event) => {
             if (event.data.size > 0) this.audioChunks.push(event.data);
         };
-        
+
         this.mediaRecorder.start(100);
         this.isRecording = true;
         this.recordingStartTime = Date.now();
         this.speechStarted = false;
-        
+
         this.showRecordingUI();
     }
 
@@ -546,12 +521,12 @@ class N8nAiVoiceAgent {
     async finishRecording() {
         if (!this.isRecording) return;
         this.stopVAD();
-        
+
         return new Promise((resolve) => {
             this.mediaRecorder.onstop = async () => {
                 this.isRecording = false;
                 this.speechStarted = false;
-                
+
                 if (this.audioChunks.length > 0) {
                     const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
                     await this.processAudio(audioBlob);
@@ -586,26 +561,20 @@ class N8nAiVoiceAgent {
     async processAudio(audioBlob) {
         const { recording, processing } = this.elements;
         this.isProcessing = true;
-        
-        console.log('📤 Processing user audio...');
+
+        console.log('Processing user audio...');
         if (recording) recording.style.display = 'none';
         if (processing) processing.style.display = 'block';
 
-        // Save user message to server
         await this.addMessage('user', audioBlob);
 
         try {
-            console.log('📤 Sending to server...');
             const response = await this.sendToServer(audioBlob);
-            console.log('📥 Server response:', response.success ? 'success' : 'failed');
-            
+
             if (response.success && response.audioBlob) {
-                console.log('💾 Saving assistant message to server...');
-                // Save assistant message to server and get the URL
                 const savedMessage = await this.saveAudioToServer(response.audioBlob, 'assistant');
-                
+
                 if (savedMessage && savedMessage.url) {
-                    // Add to chat history
                     const message = {
                         id: Date.now().toString(),
                         type: 'assistant',
@@ -617,19 +586,14 @@ class N8nAiVoiceAgent {
                     this.chatHistory.push(message);
                     this.saveChatHistory();
                     this.renderChatHistory();
-                    
-                    console.log('🔊 Playing response from server URL:', savedMessage.url);
-                    // Play response using server URL (not blob)
+
                     await this.playResponseFromUrl(savedMessage.url);
-                    console.log('✅ playResponse completed');
                 } else {
-                    console.error('❌ Failed to save assistant audio to server');
+                    console.error('Failed to save assistant audio to server');
                 }
-                
-                // Only set isProcessing to false AFTER playResponse finishes
+
                 this.isProcessing = false;
             } else if (response.error) {
-                console.log('❌ Server returned error:', response.error);
                 this.isProcessing = false;
                 this.showError(response.error);
                 setTimeout(() => {
@@ -639,8 +603,7 @@ class N8nAiVoiceAgent {
                     }
                 }, 2000);
             } else {
-                // No audioBlob and no error - unexpected state
-                console.warn('⚠️ Unexpected response state - no audioBlob and no error');
+                console.warn('Unexpected response state - no audioBlob and no error');
                 this.isProcessing = false;
                 if (this.isConversationActive) {
                     this.showListeningUI();
@@ -648,7 +611,7 @@ class N8nAiVoiceAgent {
                 }
             }
         } catch (error) {
-            console.error('❌ Error processing audio:', error);
+            console.error('Error processing audio:', error);
             this.isProcessing = false;
             this.showError('خطا در پردازش صدا');
         }
@@ -698,7 +661,7 @@ class N8nAiVoiceAgent {
             }
 
             const contentType = response.headers.get('content-type');
-            
+
             if (contentType && contentType.includes('audio')) {
                 const audioBlob = await response.blob();
                 return { success: true, audioBlob };
@@ -721,71 +684,65 @@ class N8nAiVoiceAgent {
 
     async playResponseFromUrl(audioUrl) {
         const { processing } = this.elements;
-        
-        console.log('🔊 Starting to play assistant response from URL:', audioUrl);
+
+        console.log('Starting to play assistant response from URL:', audioUrl);
         this.isPlayingResponse = true;
         if (processing) processing.style.display = 'none';
-        
-        // Show "playing response" UI
+
         this.showPlayingUI();
-        
+
         try {
             this.audioPlayer = new Audio(audioUrl);
-            
-            // Wait for audio to be ready and play completely
+
             await new Promise((resolve, reject) => {
                 let hasStartedPlaying = false;
-                
+
                 this.audioPlayer.oncanplaythrough = () => {
-                    console.log('🔊 Audio ready to play');
+                    console.log('Audio ready to play');
                 };
-                
+
                 this.audioPlayer.onplay = () => {
                     hasStartedPlaying = true;
-                    console.log('🔊 Audio started playing');
+                    console.log('Audio started playing');
                 };
-                
+
                 this.audioPlayer.onended = () => {
-                    console.log('✅ Assistant audio finished playing');
+                    console.log('Assistant audio finished playing');
                     resolve();
                 };
-                
+
                 this.audioPlayer.onerror = (e) => {
-                    console.error('❌ Error playing assistant audio:', e);
+                    console.error('Error playing assistant audio:', e);
                     reject(e);
                 };
-                
-                // Start playing
+
                 this.audioPlayer.play()
                     .then(() => {
-                        console.log('🔊 Play promise resolved');
+                        console.log('Play promise resolved');
                     })
                     .catch((err) => {
-                        console.error('❌ Play failed:', err);
+                        console.error('Play failed:', err);
                         reject(err);
                     });
-                
-                // Safety timeout - if audio doesn't end in 2 minutes, resolve anyway
+
                 setTimeout(() => {
                     if (!hasStartedPlaying) {
-                        console.warn('⚠️ Audio never started, resolving anyway');
+                        console.warn('Audio never started, resolving anyway');
                         reject(new Error('Audio playback timeout'));
                     }
                 }, 120000);
             });
-            
+
         } catch (error) {
-            console.error('❌ Error in playResponseFromUrl:', error);
+            console.error('Error in playResponseFromUrl:', error);
         } finally {
             this.isPlayingResponse = false;
             this.hidePlayingUI();
-            console.log('🎤 Preparing to return to listening mode...');
-            
-            // After audio finishes, go back to listening mode
+            console.log('Preparing to return to listening mode...');
+
             if (this.isConversationActive) {
-                // Wait a bit before returning to listening mode
                 await new Promise(resolve => setTimeout(resolve, 800));
-                console.log('🎤 Returning to listening mode');
+                console.log('Returning to listening mode');
                 this.showListeningUI();
                 this.startVAD();
             }
@@ -794,13 +751,11 @@ class N8nAiVoiceAgent {
 
     showPlayingUI() {
         const { recording, processing, recordBtn } = this.elements;
-        console.log('📢 Showing playing UI');
-        
-        // Hide recording indicator
+        console.log('Showing playing UI');
+
         if (recording) recording.style.display = 'none';
         if (processing) processing.style.display = 'none';
-        
-        // Change record button to speaker icon
+
         if (recordBtn) {
             recordBtn.classList.add('playing');
             recordBtn.innerHTML = `
@@ -813,8 +768,7 @@ class N8nAiVoiceAgent {
 
     hidePlayingUI() {
         const { recordBtn } = this.elements;
-        
-        // Restore record button to microphone icon
+
         if (recordBtn) {
             recordBtn.classList.remove('playing');
             recordBtn.innerHTML = `
@@ -835,7 +789,7 @@ class N8nAiVoiceAgent {
 
     resetUI() {
         const { idle, recording, processing, error, recordBtn, resetBtn } = this.elements;
-        
+
         if (this.chatHistory.length === 0) {
             if (idle) idle.style.display = 'block';
         }
@@ -847,16 +801,14 @@ class N8nAiVoiceAgent {
             recordBtn.classList.remove('recording');
         }
         if (resetBtn) resetBtn.style.display = 'none';
-        
+
         this.isProcessing = false;
         this.isPlayingResponse = false;
     }
 }
 
-// Initialize the voice agent
 window.n8nAiVoiceAgent = new N8nAiVoiceAgent();
 
-// Navigation smooth scrolling - Optimized
 function setupNavigation() {
     const navLinks = document.querySelectorAll('nav a');
     navLinks.forEach(link => {
@@ -865,7 +817,6 @@ function setupNavigation() {
             const targetId = link.getAttribute('href').substring(1);
             const targetElement = document.getElementById(targetId);
             if (targetElement) {
-                // Use native smooth scroll with reduced motion check
                 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
                 targetElement.scrollIntoView({
                     behavior: prefersReducedMotion ? 'auto' : 'smooth',
@@ -876,13 +827,12 @@ function setupNavigation() {
     });
 }
 
-// Mobile menu toggle
 function setupMobileMenu() {
     const nav = document.querySelector('nav');
     const header = document.querySelector('header');
-    
+
     if (!nav || !header) return;
-    
+
     const menuButton = document.createElement('button');
     menuButton.innerHTML = '☰';
     menuButton.className = 'md:hidden text-white text-xl p-2';
@@ -890,11 +840,9 @@ function setupMobileMenu() {
         nav.classList.toggle('hidden');
     };
 
-    // Insert menu button for mobile
     header.appendChild(menuButton);
 }
 
-// Performance optimization: Debounce scroll events
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -907,16 +855,12 @@ function debounce(func, wait) {
     };
 }
 
-// Parallax effect removed for better performance
 function setupParallax() {
-    // Parallax disabled to improve scrolling performance
 }
 
-// Scroll animations with Intersection Observer - Optimized
 function handleScrollAnimations() {
-    // Check if animations are supported and user prefers motion
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        return; // Skip animations if user prefers reduced motion
+        return;
     }
 
     const observerOptions = {
@@ -927,16 +871,14 @@ function handleScrollAnimations() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                // Use requestAnimationFrame for smoother animation
                 requestAnimationFrame(() => {
                     entry.target.classList.add('visible');
                 });
-                observer.unobserve(entry.target); // Only animate once
+                observer.unobserve(entry.target);
             }
         });
     }, observerOptions);
 
-    // Elements to animate - limit to important elements only
     const animatedElements = document.querySelectorAll('.glass-card');
     animatedElements.forEach(el => {
         el.classList.add('fade-in');
@@ -944,13 +886,11 @@ function handleScrollAnimations() {
     });
 }
 
-// Initialize when DOM is ready - Optimized
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('DOM loaded, initializing...');
-    
-    // Load menu data first
+
     const menuLoaded = await loadMenuData();
-    
+
     if (!menuLoaded) {
         console.error('Failed to load menu data');
         const menuContainer = document.getElementById('pizza-menu');
@@ -959,11 +899,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         return;
     }
-    
-    // Critical path: Render menu
+
     renderMenu();
-    
-    // Defer non-critical setup to next frame
+
     const deferredInit = () => {
         setupNavigation();
         setupMobileMenu();
@@ -971,7 +909,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         setupParallax();
     };
 
-    // Use requestIdleCallback if available, otherwise setTimeout
     if ('requestIdleCallback' in window) {
         requestIdleCallback(deferredInit, { timeout: 1000 });
     } else {

@@ -1,52 +1,44 @@
 #!/usr/bin/env node
 
-/**
- * تست سریع وب‌هوک N8n
- * این اسکریپت برای تست اتصال به وب‌هوک شما استفاده می‌شود
- */
-
 require('dotenv').config();
 const axios = require('axios');
 
 async function testWebhook() {
     try {
-        console.log('🔄 تست اتصال به وب‌هوک N8n...');
+        console.log('Testing N8n webhook connection...');
 
         if (!process.env.N8N_WEBHOOK_URL) {
-            console.error('❌ متغیر N8N_WEBHOOK_URL تنظیم نشده است!');
-            console.log('📝 فایل .env را بررسی کنید');
+            console.error('N8N_WEBHOOK_URL environment variable is not set!');
+            console.log('Check your .env file');
             process.exit(1);
         }
 
-        console.log(`📡 ارسال درخواست به: ${process.env.N8N_WEBHOOK_URL}`);
+        console.log(`Sending request to: ${process.env.N8N_WEBHOOK_URL}`);
 
-        // استفاده از داده‌های نمونه واقعی
         const fs = require('fs');
         let testData;
 
         try {
-            // اگر فایل نمونه وجود دارد از آن استفاده کن
             if (fs.existsSync('./test-voice-input.json')) {
                 testData = JSON.parse(fs.readFileSync('./test-voice-input.json', 'utf8'));
-                console.log('📄 استفاده از داده‌های نمونه واقعی');
+                console.log('Using real sample data');
             } else {
-                // در غیر این صورت از داده‌های ساده استفاده کن
                 testData = {
                     test: true,
-                    message: "تست اتصال از پیتزا دانیجت",
+                    message: "Connection test from Dunijet Pizza",
                     timestamp: new Date().toISOString(),
                     metadata: {
                         userAgent: "test-script",
                         source: "dunijet-pizza-site"
                     }
                 };
-                console.log('📝 استفاده از داده‌های تست ساده');
+                console.log('Using simple test data');
             }
         } catch (error) {
-            console.error('❌ خطا در خواندن فایل نمونه:', error.message);
+            console.error('Error reading sample file:', error.message);
             testData = {
                 test: true,
-                message: "تست اتصال از پیتزا دانیجت",
+                message: "Connection test from Dunijet Pizza",
                 timestamp: new Date().toISOString()
             };
         }
@@ -59,25 +51,24 @@ async function testWebhook() {
             timeout: 10000
         });
 
-        console.log('✅ اتصال موفق!');
-        console.log(`📊 وضعیت: ${response.status}`);
-        console.log(`📝 پاسخ:`, response.data);
+        console.log('Connection successful!');
+        console.log(`Status: ${response.status}`);
+        console.log(`Response:`, response.data);
 
     } catch (error) {
-        console.error('❌ خطا در اتصال:');
+        console.error('Connection error:');
 
         if (error.code === 'ECONNABORTED') {
-            console.error('⏱️  زمان اتصال تمام شد');
+            console.error('Connection timeout');
         } else if (error.response) {
-            console.error(`📊 وضعیت خطا: ${error.response.status}`);
-            console.error(`📝 جزئیات:`, error.response.data);
+            console.error(`Error status: ${error.response.status}`);
+            console.error(`Details:`, error.response.data);
         } else {
-            console.error(`💥 خطا: ${error.message}`);
+            console.error(`Error: ${error.message}`);
         }
 
         process.exit(1);
     }
 }
 
-// اجرای تست
 testWebhook();
