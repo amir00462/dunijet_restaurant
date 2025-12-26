@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 const axios = require('axios');
 const helmet = require('helmet');
@@ -9,10 +10,18 @@ const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const multer = require('multer');
 const FormData = require('form-data');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('📁 Created uploads directory');
+}
 
 // Security middleware
 app.use(helmet({
@@ -23,6 +32,7 @@ app.use(helmet({
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https:", "http:"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
+            scriptSrcAttr: ["'unsafe-inline'"],
             connectSrc: ["'self'", process.env.N8N_URL ? new URL(process.env.N8N_URL).origin : "'self'"],
         },
     },
@@ -117,6 +127,22 @@ app.use(express.static(path.join(__dirname, 'public'), {
     etag: true
 }));
 
+// Serve uploads directory for audio files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+    maxAge: '7d', // Cache audio files for 7 days
+    etag: true,
+    setHeaders: (res, filePath) => {
+        // Set correct content type for audio files
+        if (filePath.endsWith('.webm')) {
+            res.setHeader('Content-Type', 'audio/webm');
+        } else if (filePath.endsWith('.mp3')) {
+            res.setHeader('Content-Type', 'audio/mpeg');
+        } else if (filePath.endsWith('.wav')) {
+            res.setHeader('Content-Type', 'audio/wav');
+        }
+    }
+}));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.status(200).json({
@@ -124,6 +150,93 @@ app.get('/health', (req, res) => {
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development'
     });
+});
+
+// Save audio file endpoint
+app.post('/api/save-audio', upload.single('audio'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No audio file provided' });
+        }
+
+        const type = req.body.type || 'user'; // 'user' or 'assistant'
+        const timestamp = Date.now();
+        const randomId = crypto.randomBytes(8).toString('hex');
+        
+        // Determine file extension based on mimetype
+        let extension = '.webm';
+        if (req.file.mimetype.includes('mpeg') || req.file.mimetype.includes('mp3')) {
+            extension = '.mp3';
+        } else if (req.file.mimetype.includes('wav')) {
+            extension = '.wav';
+        }
+        
+        const filename = `${type}_${timestamp}_${randomId}${extension}`;
+        const filepath = path.join(uploadsDir, filename);
+        
+        // Save file to disk
+        fs.writeFileSync(filepath, req.file.buffer);
+        
+        console.log(`💾 Saved audio file: ${filename} (${req.file.size} bytes)`);
+        
+        res.json({
+            success: true,
+            filename: filename,
+            url: `/uploads/${filename}`,
+            type: type,
+            size: req.file.size,
+            mimeType: req.file.mimetype
+        });
+    } catch (error) {
+        console.error('Error saving audio file:', error);
+        res.status(500).json({ error: 'Failed to save audio file' });
+    }
+});
+
+// Delete audio file endpoint
+app.delete('/api/audio/:filename', (req, res) => {
+    try {
+        const filename = req.params.filename;
+        // Validate filename to prevent directory traversal
+        if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+            return res.status(400).json({ error: 'Invalid filename' });
+        }
+        
+        const filepath = path.join(uploadsDir, filename);
+        
+        if (fs.existsSync(filepath)) {
+            fs.unlinkSync(filepath);
+            console.log(`🗑️ Deleted audio file: ${filename}`);
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ error: 'File not found' });
+        }
+    } catch (error) {
+        console.error('Error deleting audio file:', error);
+        res.status(500).json({ error: 'Failed to delete audio file' });
+    }
+});
+
+// Clear all audio files endpoint (for clearing history)
+app.delete('/api/audio-clear', (req, res) => {
+    try {
+        const files = fs.readdirSync(uploadsDir);
+        let deletedCount = 0;
+        
+        for (const file of files) {
+            const filepath = path.join(uploadsDir, file);
+            if (fs.statSync(filepath).isFile()) {
+                fs.unlinkSync(filepath);
+                deletedCount++;
+            }
+        }
+        
+        console.log(`🗑️ Cleared ${deletedCount} audio files`);
+        res.json({ success: true, deletedCount });
+    } catch (error) {
+        console.error('Error clearing audio files:', error);
+        res.status(500).json({ error: 'Failed to clear audio files' });
+    }
 });
 
 // API Routes

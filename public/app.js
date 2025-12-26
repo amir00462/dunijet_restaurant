@@ -142,12 +142,14 @@ class N8nAiVoiceAgent {
         if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) this.closeModal(); });
     }
 
-    // LocalStorage methods
+    // LocalStorage methods - now stores URLs instead of base64
     loadChatHistory() {
         try {
             const stored = localStorage.getItem(this.storageKey);
             if (stored) {
                 this.chatHistory = JSON.parse(stored);
+                // Filter out old base64 entries (they won't work anymore)
+                this.chatHistory = this.chatHistory.filter(msg => msg.audioUrl);
             }
         } catch (e) {
             console.error('Error loading chat history:', e);
@@ -163,23 +165,54 @@ class N8nAiVoiceAgent {
         }
     }
 
-    clearHistory() {
+    async clearHistory() {
+        // Clear files from server
+        try {
+            await fetch('/api/audio-clear', { method: 'DELETE' });
+        } catch (e) {
+            console.warn('Failed to clear server audio files:', e);
+        }
+        
         this.chatHistory = [];
         localStorage.removeItem(this.storageKey);
         this.renderChatHistory();
     }
 
-    addMessage(type, audioBase64) {
-        const message = {
-            id: Date.now().toString(),
-            type: type, // 'user' or 'assistant'
-            audio: audioBase64,
-            timestamp: new Date().toISOString()
-        };
-        this.chatHistory.push(message);
-        this.saveChatHistory();
-        this.renderChatHistory();
-        return message.id;
+    async addMessage(type, audioBlob) {
+        try {
+            // Save audio file to server
+            const formData = new FormData();
+            formData.append('audio', audioBlob, type === 'user' ? 'user-audio.webm' : 'assistant-audio.mp3');
+            formData.append('type', type);
+
+            const response = await fetch('/api/save-audio', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save audio file');
+            }
+
+            const result = await response.json();
+            
+            const message = {
+                id: Date.now().toString(),
+                type: type,
+                audioUrl: result.url,
+                filename: result.filename,
+                mimeType: result.mimeType,
+                timestamp: new Date().toISOString()
+            };
+            
+            this.chatHistory.push(message);
+            this.saveChatHistory();
+            this.renderChatHistory();
+            return message.id;
+        } catch (e) {
+            console.error('Error saving message:', e);
+            return null;
+        }
     }
 
     renderChatHistory() {
@@ -197,7 +230,7 @@ class N8nAiVoiceAgent {
         chatContainer.innerHTML = this.chatHistory.map(msg => `
             <div class="voice-message ${msg.type}" data-id="${msg.id}">
                 <div class="voice-message-bubble">
-                    <button class="play-btn" onclick="n8nAiVoiceAgent.playMessage('${msg.id}')">
+                    <button class="play-btn" data-message-id="${msg.id}">
                         <svg class="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M8 5v14l11-7z"/>
                         </svg>
@@ -213,6 +246,15 @@ class N8nAiVoiceAgent {
             </div>
         `).join('');
 
+        // Attach event listeners to play buttons
+        chatContainer.querySelectorAll('.play-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const messageId = btn.getAttribute('data-message-id');
+                this.playMessage(messageId);
+            });
+        });
+
         // Scroll to bottom
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
@@ -224,7 +266,10 @@ class N8nAiVoiceAgent {
 
     async playMessage(messageId) {
         const message = this.chatHistory.find(m => m.id === messageId);
-        if (!message) return;
+        if (!message || !message.audioUrl) {
+            console.warn('Message not found or no audio URL:', messageId);
+            return;
+        }
 
         // Stop current playing
         if (this.audioPlayer) {
@@ -238,27 +283,43 @@ class N8nAiVoiceAgent {
         }
 
         try {
-            const binaryString = atob(message.audio);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            const blob = new Blob([bytes], { type: message.type === 'user' ? 'audio/webm' : 'audio/mpeg' });
-            const url = URL.createObjectURL(blob);
-
-            this.audioPlayer = new Audio(url);
+            this.audioPlayer = new Audio();
             this.currentPlayingId = messageId;
             this.updatePlayButton(messageId, true);
 
-            this.audioPlayer.onended = () => {
-                URL.revokeObjectURL(url);
-                this.updatePlayButton(messageId, false);
-                this.currentPlayingId = null;
-            };
+            // Set up event handlers before setting src
+            await new Promise((resolve, reject) => {
+                this.audioPlayer.oncanplaythrough = () => {
+                    resolve();
+                };
+
+                this.audioPlayer.onended = () => {
+                    this.updatePlayButton(messageId, false);
+                    this.currentPlayingId = null;
+                };
+
+                this.audioPlayer.onerror = (e) => {
+                    console.error('Audio element error:', e, 'URL:', message.audioUrl);
+                    this.updatePlayButton(messageId, false);
+                    this.currentPlayingId = null;
+                    reject(new Error('Failed to load audio'));
+                };
+
+                // Set source from server URL
+                this.audioPlayer.src = message.audioUrl;
+                this.audioPlayer.load();
+                
+                // Timeout for loading
+                setTimeout(() => {
+                    reject(new Error('Audio loading timeout'));
+                }, 10000);
+            });
 
             await this.audioPlayer.play();
         } catch (e) {
             console.error('Error playing message:', e);
+            this.updatePlayButton(messageId, false);
+            this.currentPlayingId = null;
         }
     }
 
@@ -487,17 +548,15 @@ class N8nAiVoiceAgent {
         if (recording) recording.style.display = 'none';
         if (processing) processing.style.display = 'block';
 
-        // Save user message
-        const userAudioBase64 = await this.blobToBase64(audioBlob);
-        this.addMessage('user', userAudioBase64);
+        // Save user message to server
+        await this.addMessage('user', audioBlob);
 
         try {
             const response = await this.sendToServer(audioBlob);
             
             if (response.success && response.audioBlob) {
-                // Save assistant message
-                const assistantAudioBase64 = await this.blobToBase64(response.audioBlob);
-                this.addMessage('assistant', assistantAudioBase64);
+                // Save assistant message to server
+                await this.addMessage('assistant', response.audioBlob);
                 
                 await this.playResponse(response.audioBlob);
             } else if (response.error) {
@@ -515,17 +574,6 @@ class N8nAiVoiceAgent {
         } finally {
             this.isProcessing = false;
         }
-    }
-
-    async blobToBase64(blob) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64 = reader.result.split(',')[1];
-                resolve(base64);
-            };
-            reader.readAsDataURL(blob);
-        });
     }
 
     async sendToServer(audioBlob) {
@@ -636,7 +684,7 @@ class N8nAiVoiceAgent {
 }
 
 // Initialize the voice agent
-const n8nAiVoiceAgent = new N8nAiVoiceAgent();
+window.n8nAiVoiceAgent = new N8nAiVoiceAgent();
 
 // Navigation smooth scrolling - Optimized
 function setupNavigation() {
