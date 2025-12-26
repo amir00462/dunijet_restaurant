@@ -230,7 +230,7 @@ class N8nAiVoiceAgent {
         chatContainer.innerHTML = this.chatHistory.map(msg => `
             <div class="voice-message ${msg.type}" data-id="${msg.id}">
                 <div class="voice-message-bubble">
-                    <button class="play-btn" data-message-id="${msg.id}">
+                    <button class="play-btn" data-message-id="${msg.id}" data-audio-url="${msg.audioUrl || ''}">
                         <svg class="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M8 5v14l11-7z"/>
                         </svg>
@@ -241,10 +241,13 @@ class N8nAiVoiceAgent {
                     <div class="voice-waveform">
                         <span></span><span></span><span></span><span></span><span></span>
                     </div>
-                    <span class="voice-time">${this.formatTime(msg.timestamp)}</span>
+                    <span class="voice-time" data-message-id="${msg.id}">${msg.duration ? this.formatDuration(msg.duration) : '--:--'}</span>
                 </div>
             </div>
         `).join('');
+
+        // Load durations for messages that don't have them yet
+        this.loadAudioDurations();
 
         // Attach event listeners to play buttons
         chatContainer.querySelectorAll('.play-btn').forEach(btn => {
@@ -262,6 +265,45 @@ class N8nAiVoiceAgent {
     formatTime(timestamp) {
         const date = new Date(timestamp);
         return date.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    formatDuration(seconds) {
+        if (!seconds || isNaN(seconds)) return '--:--';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    async loadAudioDurations() {
+        const { chatContainer } = this.elements;
+        if (!chatContainer) return;
+
+        for (const msg of this.chatHistory) {
+            if (msg.duration) continue; // Already has duration
+            if (!msg.audioUrl) continue;
+
+            try {
+                const audio = new Audio(msg.audioUrl);
+                await new Promise((resolve) => {
+                    audio.onloadedmetadata = () => {
+                        msg.duration = audio.duration;
+                        // Update the display
+                        const timeEl = chatContainer.querySelector(`.voice-time[data-message-id="${msg.id}"]`);
+                        if (timeEl) {
+                            timeEl.textContent = this.formatDuration(audio.duration);
+                        }
+                        resolve();
+                    };
+                    audio.onerror = () => resolve(); // Skip on error
+                    // Timeout after 5 seconds
+                    setTimeout(resolve, 5000);
+                });
+            } catch (e) {
+                console.warn('Could not load duration for message:', msg.id);
+            }
+        }
+        // Save updated durations
+        this.saveChatHistory();
     }
 
     async playMessage(messageId) {
@@ -736,6 +778,7 @@ class N8nAiVoiceAgent {
             console.error('❌ Error in playResponseFromUrl:', error);
         } finally {
             this.isPlayingResponse = false;
+            this.hidePlayingUI();
             console.log('🎤 Preparing to return to listening mode...');
             
             // After audio finishes, go back to listening mode
@@ -750,14 +793,36 @@ class N8nAiVoiceAgent {
     }
 
     showPlayingUI() {
-        const { recording, processing } = this.elements;
+        const { recording, processing, recordBtn } = this.elements;
         console.log('📢 Showing playing UI');
-        if (recording) {
-            recording.style.display = 'block';
-            const text = recording.querySelector('.n8n-ai-agent-recording-text');
-            if (text) text.textContent = 'در حال پخش پاسخ...';
-        }
+        
+        // Hide recording indicator
+        if (recording) recording.style.display = 'none';
         if (processing) processing.style.display = 'none';
+        
+        // Change record button to speaker icon
+        if (recordBtn) {
+            recordBtn.classList.add('playing');
+            recordBtn.innerHTML = `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            `;
+        }
+    }
+
+    hidePlayingUI() {
+        const { recordBtn } = this.elements;
+        
+        // Restore record button to microphone icon
+        if (recordBtn) {
+            recordBtn.classList.remove('playing');
+            recordBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                </svg>
+            `;
+        }
     }
 
     showError(message) {
