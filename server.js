@@ -7,6 +7,8 @@ const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
+const multer = require('multer');
+const FormData = require('form-data');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,6 +52,25 @@ const voiceLimiter = rateLimit({
     },
 });
 app.use('/api/voice-agent', voiceLimiter);
+
+// Configure multer for voice agent endpoint
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 25 * 1024 * 1024, // 25MB limit
+        files: 1, // Only one file allowed
+        fieldNameSize: 100,
+        fieldSize: 1024
+    },
+    fileFilter: (req, file, cb) => {
+        // Only allow audio files
+        if (file.mimetype.startsWith('audio/') || file.mimetype === 'application/octet-stream') {
+            cb(null, true);
+        } else {
+            cb(new Error('Only audio files are allowed'), false);
+        }
+    }
+});
 
 // Logging
 if (!isProduction) {
@@ -106,7 +127,7 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
-app.post('/api/voice-agent', async (req, res) => {
+app.post('/api/voice-agent', upload.single('audio'), async (req, res) => {
     try {
         // Validate required environment variables
         if (!process.env.N8N_URL) {
@@ -117,37 +138,53 @@ app.post('/api/voice-agent', async (req, res) => {
             });
         }
 
-        // Validate request body
-        if (!req.body || typeof req.body !== 'object') {
+        // Validate audio file
+        if (!req.file) {
             return res.status(400).json({
-                error: 'Invalid request body',
-                message: 'Request must contain valid data'
+                error: 'No audio file provided',
+                message: 'Please provide an audio file'
             });
         }
 
-        // Add request metadata
-        const enhancedBody = {
-            ...req.body,
-            metadata: {
-                timestamp: new Date().toISOString(),
-                userAgent: req.get('User-Agent'),
-                ip: req.ip
-            }
-        };
+        // Send binary audio file to N8N using FormData
+        const formData = new FormData();
+        
+        // Add audio file as binary (not base64)
+        formData.append('audio', req.file.buffer, {
+            filename: req.file.originalname || 'voice-input.webm',
+            contentType: req.file.mimetype || 'audio/webm'
+        });
 
-        console.log(`Processing voice request from ${req.ip} at ${new Date().toISOString()}`);
+        console.log(`Processing voice request from ${req.ip} at ${new Date().toISOString()}, file size: ${req.file.size} bytes`);
 
-        const response = await axios.post(process.env.N8N_URL, enhancedBody, {
+        const response = await axios.post(process.env.N8N_URL, formData, {
             headers: {
-                'Content-Type': 'application/json',
+                ...formData.getHeaders(),
                 'User-Agent': 'Dunijet-Pizza-Site/1.0'
             },
-            timeout: 30000, // 30 second timeout
+            timeout: 60000, // 60 second timeout
             maxContentLength: 50 * 1024 * 1024, // 50MB max
         });
 
         console.log(`Voice request processed successfully for ${req.ip}`);
-        res.json(response.data);
+        
+        // Wrap N8N response with success flag for client
+        const n8nResponse = response.data;
+        
+        // If N8N response already has success field, use it as is
+        if (typeof n8nResponse === 'object' && n8nResponse !== null) {
+            // Ensure success flag is present
+            if (!('success' in n8nResponse)) {
+                n8nResponse.success = true;
+            }
+            res.json(n8nResponse);
+        } else {
+            // If response is not an object, wrap it
+            res.json({
+                success: true,
+                data: n8nResponse
+            });
+        }
 
     } catch (error) {
         console.error('Error calling n8n:', {
@@ -161,15 +198,19 @@ app.post('/api/voice-agent', async (req, res) => {
         let statusCode = 500;
         let errorMessage = 'Failed to process voice request';
 
-        if (error.code === 'ECONNABORTED') {
+        if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
             statusCode = 504;
             errorMessage = 'Request timeout - please try again';
         } else if (error.response) {
             statusCode = error.response.status || 500;
             errorMessage = error.response.data?.error || errorMessage;
+        } else if (error.message.includes('File too large')) {
+            statusCode = 413;
+            errorMessage = 'Audio file is too large';
         }
 
         res.status(statusCode).json({
+            success: false,
             error: errorMessage,
             timestamp: new Date().toISOString()
         });
