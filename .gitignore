@@ -7,7 +7,6 @@ yarn-error.log
 
 # Environment variables
 .env
-.cursorignore
 .env.local
 .env.*.local
 
