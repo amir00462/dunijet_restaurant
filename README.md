@@ -1,14 +1,13 @@
 # Dunijet Restaurant
 
-A modern web application for Dunijet Pizza Restaurant featuring a glass-morphism design and intelligent voice assistant.
+A modern web application for Dunijet Pizza Restaurant featuring a glass-morphism design and intelligent voice assistant using RAG data on restaurant menu.
+
+This project is a part of N8N Course of Dunijet.
 
 ## ✨ Features
 
 - 🎨 Modern glass-morphism design with advanced effects
-- 🎤 Intelligent voice assistant powered by N8n
-- 📱 Responsive design for mobile and desktop
-- 🚀 High performance with advanced optimizations
-- 🔒 Advanced security with Helmet and Rate Limiting
+- 🎤 Intelligent ai voice assistant based on RAG data
 - 🐳 Docker-ready deployment
 
 ## 🚀 Quick Start
@@ -16,8 +15,8 @@ A modern web application for Dunijet Pizza Restaurant featuring a glass-morphism
 ### Prerequisites
 
 - Node.js 18+
-- Docker & Docker Compose (optional)
-- N8n account (for voice assistant)
+- Docker & Docker Compose (for production)
+- N8n account (for ai voice assistant)
 
 ## Installation and Setup
 
@@ -35,9 +34,6 @@ A modern web application for Dunijet Pizza Restaurant featuring a glass-morphism
    ```
 
 3. **Configure environment variables:**
-   ```bash
-   cp .env.template .env
-   ```
    Edit `.env` and set your `N8N_WEBHOOK_URL`:
    ```
    N8N_WEBHOOK_URL=https://your-n8n-instance.com/webhook/your-webhook-id
@@ -83,9 +79,7 @@ docker run -d \
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `PORT` | Server port | `3000` |
-| `NODE_ENV` | Execution environment | `development` |
-| `N8N_WEBHOOK_URL` | N8n webhook URL | - |
-| `SITE_NAME` | Site name | `Dunijet Pizza` |
+| `N8N_WEBHOOK_URL` | N8n webhook URL |
 
 ### Security Features
 
@@ -95,26 +89,6 @@ docker run -d \
 - Compression for response optimization
 - Input validation
 - Secure logging
-
-## 📁 Project Structure
-
-```
-dunijet_restaurant/
-├── public/
-│   ├── index.html              
-│   ├── app.js                  
-│   ├── menu.json               
-│   └── icons/
-│       └── icon.png            
-├── server.js                   
-├── healthcheck.js              
-├── test-webhook.js             
-├── package.json                
-├── Dockerfile                  
-├── docker-compose.yml          
-├── nginx.conf                  
-└── README.md                   
-```
 
 ## 📝 NPM Scripts
 
@@ -129,36 +103,30 @@ npm run deploy          # Deploy to production
 
 ## 🎯 API Endpoints
 
+```
 ### POST /api/voice-agent
 Send voice requests to the N8n AI agent.
+```
 
+```
 ### GET /health
 Check server health status.
+```
 
+```
 ### POST /api/save-audio
 Save audio files to the server.
+```
 
+```
 ### DELETE /api/audio/:filename
 Delete a specific audio file.
+```
 
+```
 ### DELETE /api/audio-clear
 Clear all audio files.
-
-## 🚀 Performance Optimizations
-
-- Gzip compression
-- Static file caching
-- Image lazy loading
-- Efficient JavaScript bundling
-- CSS optimization
-- CDN ready
-
-## 📊 Monitoring
-
-- Docker health checks
-- Morgan logging
-- Advanced error handling
-- Performance monitoring
+```
 
 ## 🤝 Contributing
 
@@ -168,19 +136,7 @@ Clear all audio files.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License.
-
 ## 📞 Contact
 
-- Website: https://dunijettizza.com
-- Email: info@dunijettizza.com
-- Phone: +98 990 0668 7721
-
-## 🙏 Acknowledgments
-
-- [Tailwind CSS](https://tailwindcss.com/) - Styling
-- [N8n](https://n8n.io/) - Automation and AI
-- [Express.js](https://expressjs.com/) - Server framework
-- [Docker](https://docker.com/) - Containerization
+- Website: https://dunijet.ir
+- Phone: +989900668721
