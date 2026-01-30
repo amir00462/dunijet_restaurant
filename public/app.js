@@ -542,7 +542,7 @@ class N8nAiVoiceAgent {
         if (recording) {
             recording.style.display = 'block';
             const text = recording.querySelector('.n8n-ai-agent-recording-text');
-            if (text) text.textContent = 'آماده گوش دادن...';
+            if (text) text.textContent = 'درحال گوش دادن...';
         }
         if (processing) processing.style.display = 'none';
         if (error) error.style.display = 'none';
@@ -554,7 +554,7 @@ class N8nAiVoiceAgent {
         if (recording) {
             recording.style.display = 'block';
             const text = recording.querySelector('.n8n-ai-agent-recording-text');
-            if (text) text.textContent = 'در حال گوش دادن...';
+            if (text) text.textContent = 'درحال ضبط...';
         }
     }
 

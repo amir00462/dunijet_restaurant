@@ -687,21 +687,21 @@
         <!-- Header -->
         <header class="glass p-6 mb-12 flex justify-between items-center animate-slide-down">
             <h1 class="text-4xl font-bold bg-gradient-to-r from-pink-400 via-purple-500 to-pink-600 bg-clip-text text-transparent animate-pulse-glow">
-                Dunijet Pizza
+                پیتزا دانیجت
             </h1>
-            <nav class="hidden md:flex space-x-6">
-            <a href="#home" class="hover:text-pink-400 transition">Home</a>
-            <a href="#menu" class="hover:text-pink-400 transition">Menu</a>
-            <a href="#about" class="hover:text-pink-400 transition">About</a>
-            <a href="#contact" class="hover:text-pink-400 transition">Contact</a>
+            <nav class="hidden md:flex gap-8">
+            <a href="#home" class="hover:text-pink-400 transition px-1">خانه</a>
+            <a href="#menu" class="hover:text-pink-400 transition px-1">منو</a>
+            <a href="#about" class="hover:text-pink-400 transition px-1">درباره ما</a>
+            <a href="#contact" class="hover:text-pink-400 transition px-1">تماس</a>
             </nav>
         </header>
 
         <!-- Menu Section -->
         <section id="menu">
-            <h2 class="text-4xl font-bold mb-8 text-center">Delicious Pizza Menu</h2>
+            <h2 class="text-4xl font-bold mb-8 text-center">منوی خوشمزه پیتزا</h2>
             <p class="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
-                The best pizzas with authentic Italian ingredients and Dunijet's unique taste
+                بهترین پیتزاها با مواد اصل ایتالیایی و طعم منحصر به فرد دانیجت
             </p>
             <div id="pizza-menu" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             </div>
@@ -720,14 +720,14 @@
             <!-- Widget modal -->
             <div id="n8n-ai-agent-modal" class="n8n-ai-agent-modal" style="display: none;">
                 <div class="n8n-ai-agent-modal-header">
-                    <h2>Dunijet Smart Pizza Assistant</h2>
+                    <h2>دستیار هوشمند صوتی</h2>
                     <div class="header-buttons">
-                        <button id="n8n-ai-agent-clear" class="n8n-ai-agent-clear-btn" title="Clear history">
+                        <button id="n8n-ai-agent-clear" class="n8n-ai-agent-clear-btn" title="پاک کردن تاریخچه">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                             </svg>
                         </button>
-                        <button id="n8n-ai-agent-close" class="n8n-ai-agent-close" aria-label="Close">×</button>
+                        <button id="n8n-ai-agent-close" class="n8n-ai-agent-close" aria-label="بستن">×</button>
                     </div>
                 </div>
 
@@ -738,14 +738,14 @@
                     <!-- Status Container -->
                     <div id="n8n-ai-agent-status" class="n8n-ai-agent-status">
                         <div class="n8n-ai-agent-idle">
-                            <p>Click the microphone to start a conversation</p>
-                            <p style="font-size: 12px; color: #888; margin-top: 5px;">Your voice will be detected automatically</p>
+                            <p>برای شروع گفتگو روی میکروفن کلیک کنید</p>
+                            <p style="font-size: 12px; color: #888; margin-top: 5px;">صدای شما به طور خودکار تشخیص داده خواهد شد</p>
                         </div>
 
                         <div class="n8n-ai-agent-recording" style="display: none;">
                             <div class="n8n-ai-agent-recording-indicator">
                                 <div class="n8n-ai-agent-pulse"></div>
-                                <span class="n8n-ai-agent-recording-text">Listening...</span>
+                                <span class="n8n-ai-agent-recording-text">درحال گوش دادن...</span>
                             </div>
                             <div class="n8n-ai-agent-waveform">
                                 <div class="wave-bar"></div>
@@ -758,7 +758,7 @@
 
                         <div class="n8n-ai-agent-processing" style="display: none;">
                             <div class="n8n-ai-agent-spinner"></div>
-                            <p>Processing...</p>
+                            <p>درحال پردازش...</p>
                         </div>
 
                         <div class="n8n-ai-agent-error" style="display: none;">
@@ -768,42 +768,42 @@
 
                     <!-- Controls -->
                     <div class="n8n-ai-agent-controls">
-                        <button id="n8n-ai-agent-record-btn" class="n8n-ai-agent-record-btn" title="Start conversation">
+                        <button id="n8n-ai-agent-record-btn" class="n8n-ai-agent-record-btn" title="شروع گفتگو">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
                             </svg>
                         </button>
-                        <button id="n8n-ai-agent-reset-btn" class="n8n-ai-agent-secondary-btn" style="display: none;">End Conversation</button>
+                        <button id="n8n-ai-agent-reset-btn" class="n8n-ai-agent-secondary-btn" style="display: none;">پایان گفتگو</button>
                     </div>
                 </div>
 
                 <div class="n8n-ai-agent-footer">
-                    <small>Powered by Artificial Intelligence</small>
+                    <small>ساخته شده با 💕 در دوره N8N دانیجت</small>
                 </div>
             </div>
         </div>
         <!-- About Section -->
         <section id="about" class="glass mt-16 p-8 mb-8">
             <div class="max-w-4xl mx-auto text-center">
-                <h2 class="text-3xl font-bold mb-6 text-pink-400">About Dunijet Pizza</h2>
+                <h2 class="text-3xl font-bold mb-6 text-pink-400">درباره پیتزا دانیجت</h2>
                 <p class="text-gray-300 leading-relaxed mb-6">
-                    Dunijet Pizza, with over 10 years of experience in preparing authentic Italian pizzas, is proud to combine the finest ingredients with a unique flavor. We use authentic Italian flour, genuine mozzarella cheese, fresh meat, and organic vegetables.
+                    پیتزا دانیجت با بیش از ۱۰ سال تجربه در تهیه پیتزاهای اصل ایتالیایی، با افتخار بهترین مواد اولیه را با طعم منحصر به فرد خود ترکیب می‌کند. ما از آرد اصل ایتالیایی، پنیر موتزارلا اصل، گوشت تازه و سبزیجات آرگانیک استفاده می‌کنیم.
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
                     <div class="text-center">
                         <div class="text-3xl mb-2">🏆</div>
-                        <h3 class="font-bold mb-2">Superior Quality</h3>
-                        <p class="text-sm text-gray-400">Using the finest ingredients</p>
+                        <h3 class="font-bold mb-2">کیفیت برتر</h3>
+                        <p class="text-sm text-gray-400">استفاده از بهترین مواد اولیه</p>
                     </div>
                     <div class="text-center">
                         <div class="text-3xl mb-2">🚚</div>
-                        <h3 class="font-bold mb-2">Fast Delivery</h3>
-                        <p class="text-sm text-gray-400">Delivery in less than 30 minutes</p>
+                        <h3 class="font-bold mb-2">تحویل سریع</h3>
+                        <p class="text-sm text-gray-400">تحویل در کمتر از ۳۰ دقیقه</p>
                     </div>
                     <div class="text-center">
                         <div class="text-3xl mb-2">💝</div>
-                        <h3 class="font-bold mb-2">Customer Satisfaction</h3>
-                        <p class="text-sm text-gray-400">Highest ratings</p>
+                        <h3 class="font-bold mb-2">رضایت مشتری</h3>
+                        <p class="text-sm text-gray-400">امتیازات بالا</p>
                     </div>
                 </div>
             </div>
@@ -812,35 +812,35 @@
         <!-- Contact Section -->
         <section id="contact" class="glass p-8 mb-8">
             <div class="max-w-4xl mx-auto">
-                <h2 class="text-3xl font-bold mb-6 text-center text-pink-400">Contact Us</h2>
+                <h2 class="text-3xl font-bold mb-6 text-center text-pink-400">تماس با ما</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div>
-                        <h3 class="font-bold mb-4">Contact Information</h3>
+                        <h3 class="font-bold mb-4">اطلاعات تماس</h3>
                         <div class="space-y-3 text-gray-300">
-                            <p>📍 Isfahan, Iran</p>
-                            <p>📞 +98 990 0668 7721</p>
-                            <p>🕐 11:30 AM to 11:30 PM</p>
+                            <p>📍 اصفهان، ایران</p>
+                            <p>📞 ۰۹۹۰۰۶۶۸۷۲۱</p>
+                            <p>🕐 ۱۱:۳۰ الی ۲۳:۳۰</p>
                         </div>
                     </div>
                     <div>
-                        <h3 class="font-bold mb-4">Business Hours</h3>
+                        <h3 class="font-bold mb-4">ساعات کاری</h3>
                         <div class="space-y-2 text-gray-300">
-                            <p>Saturday to Thursday: 11:30 - 23:30</p>
-                            <p>Friday: 12:00 - 24:00</p>
-                            <p class="text-pink-400 font-semibold">🚚 Delivery Fee: 50,000 Tomans</p>
+                            <p>شنبه تا پنجشنبه: ۱۱:۳۰ - ۲۳:۳۰</p>
+                            <p>جمعه: ۱۲:۰۰ - ۰۰:۰۰</p>
+                            <p class="text-pink-400 font-semibold">هزینه تحویل: ۵۰,۰۰۰ تومان</p>
                         </div>
                     </div>
                     <div>
-                        <h3 class="font-bold mb-4">Social Media</h3>
+                        <h3 class="font-bold mb-4">شبکه های اجتماعی</h3>
                         <div class="space-y-3">
                             <a href="https://www.instagram.com/dunijet" class="flex items-center text-gray-300 hover:text-pink-500 transition">
-                                <span class="ml-2">📷</span> Instagram
+                                <span class="ml-2">📷</span> اینستاگرام
                             </a>
                             <a href="https://t.me/dunijet_ai" class="flex items-center text-gray-300 hover:text-pink-500 transition">
-                                <span class="ml-2">💬</span> Telegram
+                                <span class="ml-2">💬</span> تلگرام
                             </a>
                             <a href="https://ir.linkedin.com/in/amirhosseinmohammadi-dunijet" class="flex items-center text-gray-300 hover:text-pink-500 transition">
-                                <span class="ml-2">💼</span> LinkedIn
+                                <span class="ml-2">💼</span> لینکدین
                             </a>
                         </div>
                     </div>
