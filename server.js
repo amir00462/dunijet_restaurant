@@ -30,7 +30,7 @@ app.use(helmet({
             imgSrc: ["'self'", "data:", "https:", "http:"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
             scriptSrcAttr: ["'unsafe-inline'"],
-            connectSrc: ["'self'", process.env.N8N_URL ? new URL(process.env.N8N_URL).origin : "'self'"],
+            connectSrc: ["'self'", process.env.N8N_WEBHOOK_URL ? new URL(process.env.N8N_WEBHOOK_URL).origin : "'self'"],
             mediaSrc: ["'self'", "blob:", "data:"],
         },
     },
@@ -213,7 +213,7 @@ app.delete('/api/audio-clear', (req, res) => {
 
 app.post('/api/voice-agent', upload.single('audio'), async (req, res) => {
     try {
-        if (!process.env.N8N_URL) {
+        if (!process.env.N8N_WEBHOOK_URL) {
             return res.status(500).json({
                 error: 'Server configuration error',
                 message: 'Voice agent is temporarily unavailable'
@@ -234,38 +234,41 @@ app.post('/api/voice-agent', upload.single('audio'), async (req, res) => {
             contentType: req.file.mimetype || 'audio/webm'
         });
 
-        const response = await axios.post(process.env.N8N_URL, formData, {
+        const response = await axios.post(process.env.N8N_WEBHOOK_URL, formData, {
             headers: {
                 ...formData.getHeaders(),
                 'User-Agent': 'Dunijet-Pizza-Site/1.0'
             },
-            timeout: 60000,
+            timeout: 120000,
             maxContentLength: 50 * 1024 * 1024,
-            responseType: 'arraybuffer'
+            maxBodyLength: 50 * 1024 * 1024,
+            httpAgent: new (require('http').Agent)({ keepAlive: false }),
+            httpsAgent: new (require('https').Agent)({ keepAlive: false })
         });
 
         const contentType = response.headers['content-type'] || '';
 
         if (contentType.includes('audio') || contentType.includes('octet-stream')) {
             res.set('Content-Type', contentType.includes('audio') ? contentType : 'audio/mpeg');
-            res.send(Buffer.from(response.data));
+            res.send(response.data);
+        } else if (typeof response.data === 'object') {
+            res.json(response.data);
         } else {
             try {
-                const jsonData = JSON.parse(Buffer.from(response.data).toString('utf8'));
-                if (!('success' in jsonData)) {
-                    jsonData.success = true;
-                }
+                const jsonData = JSON.parse(response.data);
                 res.json(jsonData);
             } catch {
                 res.set('Content-Type', 'audio/mpeg');
-                res.send(Buffer.from(response.data));
+                res.send(response.data);
             }
         }
 
     } catch (error) {
         console.error('Voice agent error:', {
             message: error.message,
+            code: error.code,
             status: error.response?.status,
+            data: error.response?.data,
             timestamp: new Date().toISOString()
         });
 
@@ -275,6 +278,9 @@ app.post('/api/voice-agent', upload.single('audio'), async (req, res) => {
         if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
             statusCode = 504;
             errorMessage = 'Request timeout - please try again';
+        } else if (error.code === 'ECONNRESET' || error.message.includes('socket hang up')) {
+            statusCode = 502;
+            errorMessage = 'Connection reset by N8N - check webhook configuration';
         } else if (error.response) {
             statusCode = error.response.status || 500;
             errorMessage = error.response.data?.error || errorMessage;
