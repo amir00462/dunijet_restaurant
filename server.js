@@ -242,24 +242,28 @@ app.post('/api/voice-agent', upload.single('audio'), async (req, res) => {
             timeout: 120000,
             maxContentLength: 50 * 1024 * 1024,
             maxBodyLength: 50 * 1024 * 1024,
+            responseType: 'arraybuffer',
             httpAgent: new (require('http').Agent)({ keepAlive: false }),
             httpsAgent: new (require('https').Agent)({ keepAlive: false })
         });
 
         const contentType = response.headers['content-type'] || '';
+        const responseBuffer = Buffer.from(response.data);
 
+        // Check if it's binary audio data
         if (contentType.includes('audio') || contentType.includes('octet-stream')) {
             res.set('Content-Type', contentType.includes('audio') ? contentType : 'audio/mpeg');
-            res.send(response.data);
-        } else if (typeof response.data === 'object') {
-            res.json(response.data);
+            res.send(responseBuffer);
         } else {
+            // Try to parse as JSON
             try {
-                const jsonData = JSON.parse(response.data);
+                const textData = responseBuffer.toString('utf-8');
+                const jsonData = JSON.parse(textData);
                 res.json(jsonData);
             } catch {
+                // If parsing fails, treat as binary audio
                 res.set('Content-Type', 'audio/mpeg');
-                res.send(response.data);
+                res.send(responseBuffer);
             }
         }
 

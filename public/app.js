@@ -251,7 +251,7 @@ class N8nAiVoiceAgent {
     }
 
     formatDuration(seconds) {
-        if (!seconds || isNaN(seconds)) return '--:--';
+        if (!seconds || isNaN(seconds) || !isFinite(seconds) || seconds <= 0) return '--:--';
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -262,22 +262,56 @@ class N8nAiVoiceAgent {
         if (!chatContainer) return;
 
         for (const msg of this.chatHistory) {
-            if (msg.duration) continue;
+            if (msg.duration && isFinite(msg.duration) && msg.duration > 0) continue;
             if (!msg.audioUrl) continue;
 
             try {
-                const audio = new Audio(msg.audioUrl);
+                const audio = new Audio();
                 await new Promise((resolve) => {
-                    audio.onloadedmetadata = () => {
-                        msg.duration = audio.duration;
-                        const timeEl = chatContainer.querySelector(`.voice-time[data-message-id="${msg.id}"]`);
-                        if (timeEl) {
-                            timeEl.textContent = this.formatDuration(audio.duration);
+                    let resolved = false;
+                    const updateDuration = () => {
+                        const duration = audio.duration;
+                        if (isFinite(duration) && duration > 0 && !resolved) {
+                            msg.duration = duration;
+                            const timeEl = chatContainer.querySelector(`.voice-time[data-message-id="${msg.id}"]`);
+                            if (timeEl) {
+                                timeEl.textContent = this.formatDuration(duration);
+                            }
+                            resolved = true;
+                            resolve();
                         }
-                        resolve();
                     };
-                    audio.onerror = () => resolve();
-                    setTimeout(resolve, 5000);
+
+                    audio.onloadedmetadata = updateDuration;
+                    audio.ondurationchange = updateDuration;
+                    
+                    // For WebM files, we need to seek to get the duration
+                    audio.onloadeddata = () => {
+                        if (!isFinite(audio.duration) || audio.duration === 0) {
+                            // Trick to get WebM duration: seek to a large time
+                            audio.currentTime = 1e101;
+                        }
+                    };
+                    
+                    audio.onseeked = updateDuration;
+
+                    audio.onerror = () => {
+                        console.warn('Audio load error for message:', msg.id);
+                        if (!resolved) {
+                            resolved = true;
+                            resolve();
+                        }
+                    };
+                    
+                    audio.src = msg.audioUrl;
+                    audio.load();
+                    
+                    setTimeout(() => {
+                        if (!resolved) {
+                            resolved = true;
+                            resolve();
+                        }
+                    }, 5000);
                 });
             } catch (e) {
                 console.warn('Could not load duration for message:', msg.id);
